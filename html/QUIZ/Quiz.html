@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>
+            Quiz
+        </title>
+        <style>
+            body{
+                text-align: center;
+                font-size: 50px;
+                background-color: black;
+              
+            }
+        </style>
+        <style>
+            .question{
+                background-color: rgb(138,43,226,0.5);
+                color: whitesmoke;
+                width: 500px;
+                border-radius: 50px;
+                height: 100px;
+                font-size: 40px;
+                text-decoration: none;
+                border-width: 50px;
+            
+            }
+            
+        </style>
+        <style>
+            #overlay{
+                position: fixed;
+                display: none;
+                width: 100%;    
+                height: 100%;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(94, 0, 0, 0);
+                
+                cursor: none;
+            }
+            .txt{
+                font-size: 50px;
+                color: #fff;
+                text-align: center;
+                padding-top: 25%;
+                padding-bottom: 25%;
+            }
+        </style>
+        <style>
+            .box{
+                max-width: 1200px;
+                margin: auto;
+            }
+            h1{
+                text-align: center;
+                color: white;
+            }
+            p{
+                text-align: center;
+            }
+            
+            #frage{
+                background-color: #426bf9;
+                
+                padding-left: 12px;
+                padding-top: 12px;
+                padding-bottom: 12px;
+                padding-right: 12px;
+                border: 5px solid aqua;
+                border-radius: 15px;
+            }
+            .hoverDisplay{
+                display: none;
+            }
+            .box1{
+                font-size: 30px;
+                max-width: 550px;
+                margin-top: 29px;
+                margin-right: 80%;
+                margin-left: 10px;
+            }
+            .Falsch{
+                background-color: rgba(230, 35, 35, 0.25);
+                padding-right: 10px;
+                padding-left: 10px;
+                color:whitesmoke;
+                border-radius: 50px;
+                border: 5px solid darkred;
+            }
+        </style>
+    </head>
+
+    <body>
+
+
+
+        <div id="overlay">
+            <div class='txt'></div>
+          </div>
+        <div class="box1">
+        <d class="Falsch" id="Falsch">Falsche Antowrten: 0</d> 
+          </div>
+        <script>
+            let sound = new Audio("/Users/jianqichen/Documents/html/QUIZ/correct.mp3");
+            var rightId = 0;
+            var right_answers = 0;
+            var btn_String = 0;
+            var btn_text = 0;
+            var AnzahlFalsch = 0;
+            var fragenliste = ["Was heißt Sonne auf Französisch?", "Was heißt Sonne auf Deutsch?", "Was heißt Sonne auf Englisch?", "Was heißt Sonne auf binary Code?", "Was heißt Sonne auf Latein?", "Warum leuchtet die Sonne?"];
+            var Btn_antworten = ["", "Sonne", "Sun", "Sonme","Soune","Son", "Dielli","Sun","Solis", "Hover over me", "Hover over me","Hover over me","Hover over me", "Solis", "Sole", "Solum", "Sola", "Weil sie rund ist", "Wegen dem Licht", "Weil sie weit entfernt ist", "Weil sie Sonne heißt"];
+            var idListe = ["b2","b1", "b3", "b1", "b1", "b2"];
+            async function wrong_answer(id){
+                if(id == idListe[rightId]){
+                    
+                    btn_String = 0;
+                    rightId += 1;
+                    right_answers += 1;
+                    document.getElementById(id).style.backgroundColor = "green";
+                    sound.play()
+                    await timeout(90)
+                    if(right_answers + 1 > fragenliste.length){
+                        window.location.replace("/Users/jianqichen/Documents/html/QUIZ/end.html");
+                    }
+                    document.getElementById("frage").innerHTML = fragenliste[right_answers];
+                    for (let i = 0; i < 4; i++) {
+                        btn_text += 1;
+                        btn_String += 1;0
+                        document.getElementById("b"+btn_String).innerHTML = Btn_antworten[btn_text];
+                        document.getElementById("b"+btn_String).style.backgroundColor = "rgb(138,43,226,0.5)";
+
+                    }
+
+                    return;
+                }else{
+                    AnzahlFalsch += 1;
+                    document.getElementById(id).style.backgroundColor = "rgb(255,0,0,0.5)";
+                    document.getElementById("Falsch").innerHTML = "Falsche Antworten: " + String(AnzahlFalsch);
+                    
+                    on();
+                }
+                
+            }
+
+            function timeout(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            async function on(){
+                document.getElementById("overlay").style.display = "block";
+                await timeout(5000)
+                document.getElementById("overlay").style.display = "none";
+    
+            }
+            function off(){
+                document.getElementById("overlay").style.display = "none";
+            }
+            
+            function ColorOnHover(me, myID){
+                me.style.backgroundColor = "rgb(138,43,226,1)"
+                if(right_answers == 3){
+                    if(myID == "b1"){
+                    document.getElementById("display").innerHTML = "01010011 01101111 01101110 01101110 01100101";
+                }
+                if(myID == "b2"){
+                    document.getElementById("display").innerHTML = "01010011 01101111 01101110";
+                }
+                if(myID == "b3"){
+                    document.getElementById("display").innerHTML = "01101000 01101001";
+                }
+                if(myID == "b4"){
+                    document.getElementById("display").innerHTML = "01000110 01100001 01101100 01110011 01100101";
+                }
+
+                }
+                
+            }
+            function ColorNoHover(me, myID){
+                me.style.backgroundColor = "rgb(138,43,226,0.5)"
+                document.getElementById("display").innerHTML = ""
+            }
+            </script>
+        
+        <div class="box">
+        <h1>Quiz</h1>
+        <p id="frage">Was heißt Sonne auf Französisch?</p>
+        <p><button id="b1" class="question" onclick="wrong_answer(this.id)" style="border: 5px solid greenyellow;" onmouseover="ColorOnHover(this,this.id)" onmouseout="ColorNoHover(this,this.id)">Sun</button>
+            <button id="b2" class="question" onclick="wrong_answer(this.id)" style="border: 5px solid aquamarine;" onmouseover="ColorOnHover(this,this.id)" onmouseout="ColorNoHover(this,this.id)">Soleil</button></p>
+        <p><button id="b3" class="question" onclick="wrong_answer(this.id)" style="border: 5px solid blue;" onmouseover="ColorOnHover(this,this.id)" onmouseout="ColorNoHover(this,this.id)">Sunce</button>
+            <button id="b4" class="question" onclick="wrong_answer(this.id)" style="border: 5px solid red;" onmouseover="ColorOnHover(this,this.id)" onmouseout="ColorNoHover(this,this.id)">Taiyo</button></p>
+        <br>
+        <br>
+        <p id="display"style="color:red"></p>
+        <br>
+        <p id="display1" class="hoverDisplay"></p>
+        <br>
+        <p id="display2" class="hoverDisplay"></p>
+        <br>
+        <p id="display3" class="hoverDisplay"></p>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+        <title>
+            Titanik
+        </title>
+    </head>
+    <body>
+        <style>
+            .link1{
+                background-color: white;
+                color: rebeccapurple;
+                font-size: 30px;
+                padding-top: 12px;
+                padding-bottom: 12px;
+                padding-left: 25px;
+                padding-right: 25px;
+                text-decoration: none;
+            }
+            .link1:hover{
+                background-color: #f4511e;
+            }
+        </style>
+        <style>
+            .Titanic-Films{
+                display: none
+            }
+        </style>
+        <h1>Was ist die Titanic?</h1>
+        <hr>
+        <p style="font-size: 30px;">Die Titanic (englisch [taɪˈtænɪk]) war ein britischer Passagierdampfer der White Star Line und bei ihrer Indienststellung am 2. April 1912 das größte Schiff der Welt. </br>
+            Sie fuhr im Transatlantik-Liniendienst zwischen Southampton und New York. </br>
+            In der Nacht vom 14. auf den 15. April 1912 <b>kollidierte sie auf ihrer ersten Fahrt im Nordatlantik </b>mit einem <i>Eisberg </i> und versank zwei Stunden und vierzig Minuten später. </br>
+            Von den über 2220 an Bord befindlichen Personen kamen dabei 1514 ums Leben, weshalb der Untergang zu den größten Unglücken der Seefahrt zählt.</p>
+        <h2>Titanic Verfilmung</h2>
+        <p style="font-size: 30px;">Titanic [taɪˈtænɪk] ist ein US-amerikanisches Spielfilmdrama aus dem Jahr 1997 unter der Regie von James Cameron, das die Geschichte der Jungfernfahrt der Titanic nacherzählt. Der Film gehört zu den erfolgreichsten Filmen aller Zeiten, war aber nicht der erste oder der letzte, der sich mit dem Thema befasst hat. <br>
+            Der Passagierdampfer war im April 1912 mit einem Eisberg zusammengestoßen und sank. Für den Spielfilm wurden Teile des Schiffs aufwändig und weitgehend originalgetreu rekonstruiert. In die tatsächliche Geschichte um den Untergang wurde eine Liebesgeschichte mit fiktiven Personen eingeflochten. 
+            Eine Rahmenerzählung bindet die Unterseeboot-Expeditionen mit ein, die es seit der Entdeckung des Wracks gibt.
+            Der Film gewann elf Oscars, darunter den für den Besten Film, und hatte allein in den Vereinigten Staaten 130,9 Millionen Kinobesucher,[3] in Deutschland 18 Millionen. Mit einem weltweiten Einspielergebnis von über 1,8 Mrd. <br>
+            US-Dollar belegte der Film zwölf Jahre lang den ersten Platz in der Liste der erfolgreichsten Filme, bis er 2009 durch Avatar – Aufbruch nach Pandora abgelöst wurde. Auch bei jenem Film war Cameron Regisseur. Die Musik des Titanic-Films wurde von James Horner komponiert, den Titelsong My Heart Will Go On sang Céline Dion.</p>
+        <p>Wie heißt das Schiff?</p> <input id="name"> <br>
+
+        
+
+        <div id="overlay" onclick="off()">
+            <div class='txt'>Hello</div>
+          </div>
+
+        <style>
+            .btn {
+              background-color: #f4511e;
+              border: none;
+              color: white;
+              padding: 16px 32px;
+              text-align: center;
+              font-size: 16px;
+              margin: 4px 2px;
+              opacity: 1;
+              transition: 0.3s;
+            }
+            
+            .btn:hover {opacity: 0.6}
+            </style>
+
+        <style>
+            #overlay{
+                position: fixed;
+                display: none;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0,0,0,0.5);
+                
+                cursor: none;
+            }
+            .txt{
+                font-size: 50px;
+                color: #fff;
+                transform: translate(40%, 150px);
+            }
+        </style>
+        
+
+        <button class="btn" onclick="on()">Hello</button>
+        
+        <script>
+        function timeout(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        async function on(){
+            document.getElementById("overlay").style.display = "block";
+            await timeout(5000)
+            document.getElementById("overlay").style.display = "none";
+
+        }
+        function off(){
+            document.getElementById("overlay").style.display = "none";
+        }
+        </script>
+        
+        <a class="link1" onclick=> Weitere infos</a>
+
+
+        
+
+            <video class="Titanic-Films" width="2240px" height="1180px" controls = "controls">
+            <source src="25 JAHRE TITANIC - Offizieller Trailer | 20th Century Studios.mp4" type="video/mp4" />
+        </video>
+               
+
+        </body>
+</html>
+    
