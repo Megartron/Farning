@@ -1,6 +1,46 @@
 <!DOCTYPE html>
 <html>
+    <style>
+        body{
+            background-image: url(wp9024552.jpg);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+             background-size: cover;
+        }
+        .box{
+            color: whitesmoke;
+            font-size: 30px;
+            text-align: center;
+            max-width: 1200px;
+            margin: auto;
+        }
+        q{
+            padding-top: 50%;
+        }
+        
+    </style>
     <body>
-        Gratulation! Dies ist das Ende!
+        
+        <div class="box">
+            <br>
+            <br>
+            <br>
+            <q><p>This is the end!</p>
+                <p id="score"></p></q>
+            
+        </div>
+        <script>
+            function getParameter(parameterName){
+                let parameters = new URLSearchParams(window.location.search);
+                return parameters.get(parameterName)
+            }
+            var wrongAnswers = getParameter("wrongAnswers")
+            if(wrongAnswers != 1){
+                document.getElementById("score").innerHTML = "You have answerd wrong " + String(wrongAnswers) + " times!";
+            }
+            else{
+                document.getElementById("score").innerHTML = "You have answerd wrong 1 time!";
+            }
+        </script>
     </body>
 </html>
