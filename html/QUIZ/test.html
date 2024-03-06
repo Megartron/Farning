@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <title>
-            Quiz
+            Test
         </title>
         <style>
             body{
@@ -23,7 +23,12 @@
                 font-size: 40px;
                 text-decoration: none;
                 border-width: 50px;
-            
+                margin-left: 10px;
+                margin-right: 10px;
+                transition: transform 0.5s ease-in-out;
+            }
+            .question:hover{
+                transform: scale(1.1);
             }
             
         </style>
@@ -77,7 +82,7 @@
             }
             .box1{
                 font-size: 30px;
-                max-width: 550px;
+                max-width: 350px;
                 margin-top: 29px;
                 margin-right: 80%;
                 margin-left: 10px;
@@ -89,6 +94,13 @@
                 color:whitesmoke;
                 border-radius: 50px;
                 border: 5px solid darkred;
+            }
+            #timer{
+                color: white;
+                font-size: 30px;
+                max-width: 100px;
+                margin-top: 29px;
+                margin-left: 80%;
             }
         </style>
     </head>
@@ -103,6 +115,8 @@
         <div class="box1">
         <d class="Falsch" id="Falsch">Falsche Antowrten: 0</d> 
           </div>
+        
+        <div class="box2"><o id="timer">60</o></div>
 
           <div class="box">
         <h1>Quiz</h1>
@@ -129,32 +143,80 @@
             var btn_String = 0;
             var btn_text = 0;
             var AnzahlFalsch = 0;
-
+            var Round0 = false;
             var random_Number = 0;
-            var usedNumbers = []
+            var usedNumbers = [];
+            var gleichungQuestion 
+            var MathQuestionId;
+            var usedNumbersMath = [];
+            var gleichungAntwortF1,gleichungAntwortF2,gleichungAntwortF3,gleichungAntwortF,gleichungAntwortF4;
 
+            function Mathquestion(){
+                var MatheZiffer1, Matheziffer2, Matheziffer3, MatheZiffer4;
+                MatheZiffer1 = Math.floor(Math.random() * 100);
+                MatheZiffer4 = Math.floor(Math.random() * 100);
+                Matheziffer2 = Math.floor(Math.random() * 100);
+                Matheziffer3 = Math.floor(Math.random() * 100);
+                var gleichungAntwort = ((3 * MatheZiffer1 + 12) / (5 - 2)) * (Math.pow(MatheZiffer4, 2) - Math.sqrt(81)) + Matheziffer2 / 4 - (10 * 6) / Matheziffer3;
+                gleichungQuestion = "((3 * " + String(MatheZiffer1) + " + 12) / (5 - 2)) * ("+ MatheZiffer4 +"^2 - √81) + "+Matheziffer2+" / 4 - (10 * 6 / "+Matheziffer3+")"
 
-            var fragenliste = ["Was heißt Sonne auf Französisch?","Was heißt Sonne auf Deutsch?", "Was heißt Sonne auf Englisch?", "Was heißt Sonne auf binary Code?", "Was heißt Sonne auf Latein?", "Warum leuchtet die Sonne?"];
-            var Btn_antworten = ["Sun","Soleil","Sunce","Taiyo", "Sonne", "Sun", "Sonme","Soune","Son", "Dielli","Sun","Solis", "Hover over me", "Hover over me","Hover over me","Hover over me", "Solis", "Sole", "Solum", "Sola", "Weil sie rund ist", "Wegen dem Licht", "Weil sie weit entfernt ist", "Weil sie Sonne heißt"];
-            var idListe = ["b2","b1", "b3", "b1", "b1", "b2"];
+                var listAnswers = ["","","",""];
+                var listAnswersNew = [];
+                for (let index = 0; index < 3; index++) {
+                    i = Math.pow(10,index)
+                    gleichungAntwortF = gleichungAntwort + Math.round(Math.random()*(100000*i))/(100000*i);
+                    listAnswers[index] = gleichungAntwortF
+                    console.log(listAnswers)
+                }
+                listAnswers[3] = gleichungAntwort;
+                console.log(listAnswers)
+                random_Number = Math.floor(Math.random() * 3);
+                alert(random_Number);
+                gleichungAntwortF1 = listAnswers[random_Number];
+                listAnswers.splice(random_Number, 1);
+                
+                for (let index = 0; index <= 3; index++) {
+                    random_Number = Math.floor(Math.random() * 3 - index);
+                    listAnswersNew += listAnswers[random_Number];
+                    if(listAnswersNew[index] == gleichungAntwort){
+                        MathQuestionId = "b" + String(index + 1);
+                    }
+                }
+                gleichungAntwortF1 = listAnswersNew[0];
+                gleichungAntwortF2 = listAnswersNew[1];
+                gleichungAntwortF3 = listAnswersNew[2];
+                gleichungAntwortF4 = listAnswersNew[3];
+            }
+
+            Mathquestion();
+
+            var fragenliste = ["Was heißt Sonne auf Französisch?","Was heißt Sonne auf Deutsch?", "Was heißt Sonne auf Englisch?", "Was heißt Sonne auf binar Code?", "Was heißt Sonne auf Latein?", "Warum leuchtet die Sonne?", gleichungQuestion];
+            var Btn_antworten = ["Sun","Soleil","Sunce","Taiyo", "Sonne", "Sun", "Sonme","Soune","Son", "Dielli","Sun","Solis", "Hover over me", "Hover over me","Hover over me","Hover over me", "Solis", "Sole", "Solum", "Sola", "Weil sie rund ist", "Wegen dem Licht", "Weil sie weit entfernt ist", "Weil sie Sonne heißt",gleichungAntwortF1,gleichungAntwortF2,gleichungAntwortF3,gleichungAntwortF4];
+            var idListe = ["b2","b1", "b3", "b1", "b1", "b2","b4",MathQuestionId];
+            alert(idListe[rightId]);
             async function wrong_answer(id){
-                if(id == idListe[rightId] || id){
-                    random_Number = Math.floor(Math.random() * 5);
+                right_answers += 1;
+                
+                if(id == idListe[rightId]){
+                    if(right_answers >= 8){
+                        window.location.replace("end.html?wrongAnswers="+String(AnzahlFalsch));
+                        return;
+                    }
+                    random_Number = Math.floor(Math.random() * 7);
                     while (usedNumbers.includes(random_Number)) {
-                        random_Number = Math.floor(Math.random() * 5);
+                        random_Number = Math.floor(Math.random() * 7);
                     }
                     usedNumbers += random_Number;
                     rightId = random_Number;
 
-                    right_answers += 1;
                     btn_String = 0;
 
                     document.getElementById(id).style.backgroundColor = "green";
-                    sound.play()
-                    await timeout(90)
-                    if(right_answers + 1 > fragenliste.length){
-                        window.location.replace("end.html?wrongAnswers="+String(AnzahlFalsch));
+                    if (Round0) {
+                        sound.play()
                     }
+                    await timeout(90)
+                    
 
                     document.getElementById("frage").innerHTML = fragenliste[random_Number];
 
@@ -196,10 +258,9 @@
             }
             
             function ColorOnHover(me, myID){
-                console.log(me.style.backgroundColor);
                 if(me.style.backgroundColor != "rgba(255, 0, 0, 0.5)"){
                     me.style.backgroundColor = "rgb(138,43,226,1)"
-                    if(random_Number = 4){
+                    if(random_Number == 3){
                         if(myID == "b1"){
                         document.getElementById("display").innerHTML = "01010011 01101111 01101110 01101110 01100101";
                     }
@@ -223,14 +284,45 @@
             }
             function ColorNoHover(me, myID){
                 if(me.style.backgroundColor == "rgba(255, 0, 0, 0.5)"){
-                    console.log(true)
 
                     return;
                 }
                 me.style.backgroundColor = "rgb(138,43,226,0.5)"
                 document.getElementById("display").innerHTML = ""
             }
+
             wrong_answer("b2")
+
+
+            /*// Set the initial time in seconds
+            let seconds = 60;
+
+            // Get the timer element
+            const timerElement = document.getElementById('timer');
+
+            // Function to update the timer display
+            function updateTimer() {
+                // Display the current seconds
+                timerElement.textContent = seconds;
+            }
+
+            // Function to start the countdown
+            function startCountdown() {
+                // Update the countdown every second
+                const countdownInterval = setInterval(() => {
+                    if (seconds > 0) {
+                        seconds--;
+                        updateTimer();
+                    } else {
+                        // Stop the countdown when it reaches 0
+                        clearInterval(countdownInterval);
+                        alert("Countdown reached 0!");
+                    }
+                }, 1000);
+            }
+
+            // Start the countdown when the page loads
+            startCountdown();*/
             </script>
         
         
