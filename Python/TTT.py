@@ -11,6 +11,7 @@ class TTT(arcade.Window):
         self.spieler2 = "Computer"
         self.aktueller_spieler = self.spieler1
         self.verzögerung = 2
+        self.verzögerung_delta = 0
 
 
     #def startmenu(self):
@@ -36,6 +37,38 @@ class TTT(arcade.Window):
                           ["","",""]]
         arcade.play_sound(audioBG, 1.0, 0)
     
+
+    def MittelschlauerComputer(self):
+        EckenComp = [(0, 2), (2, 2), (2, 0), (0, 0), (0, 2), (2, 2)]
+        Ecken = [(0, 2), (2, 2), (2, 0), (0, 0)]
+        SeitenComp = [(1, 2), (0, 1), (1, 0), (2, 1), (1, 2), (0, 1)]
+        Seiten = [(1, 2), (0, 1), (2, 1), (1, 0)]
+        Mitte = (1, 1)
+        x = 0
+        y = 0
+        buch = {}
+
+        sf = self.spielfeld
+        mw = False
+
+        if sf[1][1] == "O":
+            if (sf[0][2] or sf[2][2] or sf[2][0] or sf[0][0]) == "O":
+                x = 0; y = 2
+                if sf[x][y] == "O":
+                    buch[]
+                
+            elif (sf[1][2] or sf[0][1] or sf[1][0] or sf[2][1]) == "O":
+                mw = True
+        elif ((sf[0][2] and sf[1][2]) == "O") or ((sf[0][2] and sf[2][2]) == "O") or ((sf[2][2] and sf[1][2]) == "0"):
+            mw = True
+        elif ((sf[0][0] and sf[2][0]) == "O") or ((sf[1][0] and sf[0][0]) == "O") or ((sf[1][0] and sf[2][0]) == "0"):
+            mw = True
+        elif ((sf[0][2] and sf[0][1]) == "O") or ((sf[0][0] and sf[0][1]) == "O") or ((sf[0][0] and sf[0][2]) == "0"):
+            mw = True
+
+    def __kann_gewinnen(self,reihe):
+        return #ob man gewinnen kann
+
     def __gewinnprüfung(self):
         #Reihen
         if (self.spielfeld[0][0] == "O" and self.spielfeld[0][1] == "O" and self.spielfeld[1][2] == "O") or  (self.spielfeld[1][0] == "O" and self.spielfeld[1][1] == "O" and self.spielfeld[0][2] == "O") or  (self.spielfeld[2][0] == "O" and self.spielfeld[2][1] == "O" and self.spielfeld[2][2] == "O"):
@@ -66,11 +99,8 @@ class TTT(arcade.Window):
         print(modifiers)
         print(x)
         print(y)
-        self.symbol = "X" if self.symbol== "O" else "O"
-        if self.symbol == "X":
-            spielstein = arcade.Sprite("Backgroundcolor.png", 0.2)
-        else:
-            spielstein = arcade.Sprite("1000_F_601211158_bu0EaLaEqZwLyweHdtsxJf8GfDkMO7hI.jpg", 0.2)
+        self.symbol = "X"
+        spielstein = arcade.Sprite("1000_F_601211158_bu0EaLaEqZwLyweHdtsxJf8GfDkMO7hI.jpg", 0.2)
         spielstein_position = self.__Koordinaten_feldmittelpunkt(x, y)
         arcade.play_sound(self.currentaudio,5.0,0)
         print("x " +str(x//200))
@@ -80,9 +110,25 @@ class TTT(arcade.Window):
             spielstein.center_x = spielstein_position[0]
             spielstein.center_y = spielstein_position[1]
             self.spielsteinliste.append(spielstein)
-            #self.aktueller_spieler = self.spieler2
+            self.aktueller_spieler = self.spieler2
+        
         self.__gewinnprüfung()
 
+
+    def on_update(self, delta_time: float):
+        if self.aktueller_spieler == "Computer" and self.start:
+            
+            self.verzögerung_delta += delta_time
+            if self.verzögerung_delta >= self.verzögerung:
+                self.symbol = "X"
+                spielstein = arcade.Sprite("Backgroundcolor.png", 0.2)
+                self.spielfeld[feld[0]][feld[1]] = self.symbol
+                spielstein.center_x = 100 + feld[0] * 200
+                spielstein.center_y = 100 + feld[1] * 200
+                self.spielsteinliste.append(spielstein)
+                self.symbol = "X" if self.symbol== "O" else "O"
+                self.aktueller_spieler = self.spieler1
+                self.verzögerung_delta = 0
 
         
             
