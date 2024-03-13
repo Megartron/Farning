@@ -38,36 +38,43 @@ class TTT(arcade.Window):
         arcade.play_sound(audioBG, 1.0, 0)
     
 
-    def MittelschlauerComputer(self):
-        EckenComp = [(0, 2), (2, 2), (2, 0), (0, 0), (0, 2), (2, 2)]
-        Ecken = [(0, 2), (2, 2), (2, 0), (0, 0)]
-        SeitenComp = [(1, 2), (0, 1), (1, 0), (2, 1), (1, 2), (0, 1)]
-        Seiten = [(1, 2), (0, 1), (2, 1), (1, 0)]
-        Mitte = (1, 1)
-        x = 0
-        y = 0
-        buch = {}
+    def __kann_gewinnen(self, reihe):
+        if reihe.count(self.symbol) == 2 and reihe.count("") == 1:
+            return reihe.index("")
+        else:
+            return None
 
+    def MittelschlauerComputer(self, symbol):
+        sfecht = [[(0,2),(1,2)(2,2)],
+                  [(0,1),(1,1),(2,1)],
+                  [(0,0),(1,0),(2,0)]]
         sf = self.spielfeld
-        mw = False
-
+        EckenEcht = [(0, 2), (2, 2), (2, 0), (0, 0), (0, 2), (2, 2)]
+        EckenSF = [sf[0][2],sf[2][0],sf[2][2],sf[0][0]]
         if sf[1][1] == "O":
-            if (sf[0][2] or sf[2][2] or sf[2][0] or sf[0][0]) == "O":
-                x = 0; y = 2
-                if sf[x][y] == "O":
-                    buch[]
-                
-            elif (sf[1][2] or sf[0][1] or sf[1][0] or sf[2][1]) == "O":
-                mw = True
-        elif ((sf[0][2] and sf[1][2]) == "O") or ((sf[0][2] and sf[2][2]) == "O") or ((sf[2][2] and sf[1][2]) == "0"):
-            mw = True
-        elif ((sf[0][0] and sf[2][0]) == "O") or ((sf[1][0] and sf[0][0]) == "O") or ((sf[1][0] and sf[2][0]) == "0"):
-            mw = True
-        elif ((sf[0][2] and sf[0][1]) == "O") or ((sf[0][0] and sf[0][1]) == "O") or ((sf[0][0] and sf[0][2]) == "0"):
-            mw = True
+            if ((sf[0][2] == "O" and sf[2][0] == "") or (sf[2][2] == "O" and sf[0][0] == "") or (sf[0][2] == "" and sf[2][0] == "O") or (sf[2][2] == "" and sf[0][0] == "O")):
+                for i in EckenSF:
+                    if i == "O":
+                        return EckenEcht[EckenEcht.index[sfecht[0][2]] + 2]
 
-    def __kann_gewinnen(self,reihe):
-        return #ob man gewinnen kann
+        for zeilen_index in range(list(len(sf))):
+            if spalten_index := self.__kann_gewinnen(self.spielfeld[zeilen_index]):
+                return (zeilen_index,spalten_index)
+
+        #self.spielfeld entpackdt sf, d.h. statt einer Liste von drei Listen stehen dort drie einzellisten
+        #zip fasst alle Elemente der drei Listen die an selbe Stelle stehen zu einem Tupel zusammen
+        #somit vertausch es die Zeilen und Spalten von sf
+        spielfeld_transponiert = zip(*sf)
+
+        for zeilen_index in range(len(spielfeld_transponiert)):
+            if spalten_index := self.__kann_gewinnen(spielfeld_transponiert[zeilen_index]):
+                return (zeilen_index,spalten_index)
+
+        return 
+
+
+    #def __kann_gewinnen(self,reihe):
+    #    return #ob man gewinnen kann
 
     def __gewinnprüfung(self):
         #Reihen
@@ -120,7 +127,7 @@ class TTT(arcade.Window):
             
             self.verzögerung_delta += delta_time
             if self.verzögerung_delta >= self.verzögerung:
-                self.symbol = "X"
+                feld = self.MittelschlauerComputer(self.symbol)
                 spielstein = arcade.Sprite("Backgroundcolor.png", 0.2)
                 self.spielfeld[feld[0]][feld[1]] = self.symbol
                 spielstein.center_x = 100 + feld[0] * 200
