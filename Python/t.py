@@ -1,40 +1,38 @@
-# Importing arcade module 
-import arcade 
-import arcade.gui 
-
-# Creating MainGame class 
-class MainGame(arcade.Window): 
-	def __init__(self): 
-		super().__init__(600, 600, title="Buttons") 
-
-		# Changing background color of screen 
-		arcade.set_background_color(arcade.color.BLUE) 
-
-		# Creating a UI MANAGER to handle the UI 
-		self.uimanager = arcade.gui.UIManager() 
-		self.uimanager.enable() 
-
-		# Creating Button using UIFlatButton 
-		start_button = arcade.gui.UIFlatButton(text="Start Game", 
-											width=200) 
-
-		# Adding button in our uimanager 
-		self.uimanager.add( 
-			arcade.gui.UIAnchorWidget( 
-				anchor_x="center_x", 
-				anchor_y="center_y", 
-				child=start_button) 
-		) 
-
-	# Creating on_draw() function to draw on the screen 
-
-	def on_draw(self): 
-		arcade.start_render() 
-		
-		# Drawing our ui manager 
-		self.uimanager.draw() 
+sf = [["","","O"],
+      ["","O",""],
+      ["O","",""]]
 
 
-# Calling MainGame class 
-MainGame() 
-arcade.run() 
+def MittelschlauerComputer(sf):
+    EckenComp = [(0, 2), (2, 2), (2, 0), (0, 0), (0, 2), (2, 2)]
+    Ecken = [(0, 2), (2, 2), (2, 0), (0, 0)]
+    SeitenComp = [(1, 2), (0, 1), (1, 0), (2, 1), (1, 2), (0, 1)]
+    Seiten = [(1, 2), (0, 1), (2, 1), (1, 0)]
+    Mitte = (1, 1)
+    x = 0
+    y = 0
+    buch = {}
+
+    o = "O"
+
+    print(sf)
+    mw = False
+
+    if sf[1][1] == "O":
+        if ((sf[0][2] == "O" and sf[2][0] == "") or (sf[2][2] == "O" and sf[0][0] == "") or (sf[0][2] == "" and sf[2][0] == "O") or (sf[2][2] == "" and sf[0][0] == "O")):
+            return True
+        
+        elif (sf[1][2] == o and sf[1][0] == "") or (sf[0][1] == o and sf[2][1] == "") or (sf[1][2] == "" and sf[1][0] == "O") or (sf[0][1] == "" and sf[2][1] == "O"):
+            return True
+        elif (((sf[0][2] and sf[1][2]) == "O") and sf[2][2] == "") or (((sf[0][2] and sf[2][2]) == "O") and sf[1][2]) or (((sf[2][2] and sf[1][2]) == "0") and sf[0][2] == ""):
+            return True
+        elif (((sf[0][0] and sf[2][0]) == "O") and sf[1][0] == "") or (((sf[1][0] and sf[0][0]) == "O") and sf[2][0] == "" ) or (((sf[1][0] and sf[2][0]) == "0") and sf[0][0] == ""):
+            return True
+        elif ((sf[0][2] and sf[0][1]) == "O") or ((sf[0][0] and sf[0][1]) == "O") or ((sf[0][0] and sf[0][2]) == "0"):
+            return True
+    
+    return False
+
+
+
+print(MittelschlauerComputer(sf))
