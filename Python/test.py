@@ -24,3 +24,6 @@ if sf[1][1] == "O":
                 y = sf[x].index(i)
                 sfechtpos = sfecht[x][y]
                 print(EckenEcht[EckenEcht.index(sfechtpos)  + 2])
+elif sf[1][1] == "":
+         if(((sf[0][2] and sf[2][0]) or (sf[2][2] and sf[0][0])) == "O"):
+              print(1,1)
