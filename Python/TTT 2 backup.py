@@ -8,7 +8,7 @@ class TTT(arcade.Window):
         self.phase = 0
 
         # Gibt an, wie viele Sekunden ein Zug des Computers verzögert wird
-        self.verzögerung = 1
+        self.verzögerung = 0.2
 
         self.setup()
 
@@ -23,15 +23,31 @@ class TTT(arcade.Window):
         
 
         # Wir legen zufällig fest, ob "O" oder "X" beginnt
-        self.symbol = random.choice(["O", "X"])
+        self.symbol = random.choice(["X", "O"])
         # Ein Dictionary, das die Symbole den Spielertypen zuordnet
         self.symbol_spieler = {"O": "Mensch", "X": "ComputerRandom"}
+
+        print(self.symbol)
+        print(self.symbol_spieler[self.symbol])
 
         self.verzögerung_delta = 0
 
         self.vorbei = False
 
-    # def __koordinaten_feldmittelpunkt(self, x: int, y: int): # TODO: Kurz schreiben
+    def __setzen(self, x, y, wert):
+        self.spielfeld[-1 - y][x] = wert
+
+    def __lesen(self, x, y):
+        return self.spielfeld[-1 - y][x]
+    
+    def __zeile(self, y):
+        return[self.__lesen(x, y) for x in range(3)]
+    
+    def __zeile(self, x):
+        return[self.__lesen(x, y) for y in range(3)]
+
+
+    # def __koordinaten_feldmittelpunkt(self, x: int, y: int): # TDO: Kurz schreiben
     #     if 0 <= x < 200 and 0 <= y < 200:
     #         return (100, 100)
     #     elif 0 <= x < 200 and 200 <= y < 400:
@@ -56,14 +72,14 @@ class TTT(arcade.Window):
     
     # Gibt True zurück, falls ein Spieler gewonnen hat, ansonsten False
     def __gewinnprüfung(self):
-        return self.spielfeld[0][0] == self.spielfeld[0][1] == self.spielfeld[0][2] != "" or \
-            self.spielfeld[1][0] == self.spielfeld[1][1] == self.spielfeld[1][2] != "" or \
-            self.spielfeld[2][0] == self.spielfeld[2][1] == self.spielfeld[2][2] != "" or \
-            self.spielfeld[0][0] == self.spielfeld[1][0] == self.spielfeld[2][0] != "" or \
-            self.spielfeld[0][1] == self.spielfeld[1][1] == self.spielfeld[2][1] != "" or \
-            self.spielfeld[0][2] == self.spielfeld[1][2] == self.spielfeld[2][2] != "" or \
-            self.spielfeld[0][0] == self.spielfeld[1][1] == self.spielfeld[2][2] != "" or \
-            self.spielfeld[0][2] == self.spielfeld[1][1] == self.spielfeld[2][0] != ""
+        return self.__lesen(0, 0) == self.__lesen(0, 1) == self.__lesen(0, 2) != "" or \
+            self.__lesen(1, 0)== self.__lesen(1, 1) == self.__lesen(1, 2) != "" or \
+            self.__lesen(2, 0) == self.__lesen(2, 1) == self.__lesen(2, 2) != "" or \
+            self.__lesen(1, 0) == self.__lesen(0, 0) == self.__lesen(2, 0) != "" or \
+            self.__lesen(0, 1) == self.__lesen(1, 1) == self.__lesen(2, 1) != "" or \
+            self.__lesen(0, 2)  == self.__lesen(1, 2)  == self.__lesen(2, 2) != "" or \
+            self.__lesen(0, 0) == self.__lesen(1, 1) == self.__lesen(2, 2) != "" or \
+            self.__lesen(0, 2) == self.__lesen(1, 1) == self.__lesen(2, 0) != ""
         
     def __koordinaten_feldmittelpunkt(self, x: int, y: int):
         return (x // 200 * 200 + 100, y // 200 * 200 + 100)
@@ -71,19 +87,64 @@ class TTT(arcade.Window):
     # Wählt zufällig ein freies Feld aus und gibt dieses zurück
     def __random_zug(self):
         # Freien Felder bestimmen
-        freie_felder = [(x, y) for x in range(3) for y in range(3) if self.spielfeld[2 - y][x] == ""]
-        
-        # Ein freies Feld zufällig auswählen
-        zufälliges_feld = random.choice(freie_felder)
+        gegener_symbol = "X" if self.symbol == "O" else "O"
+        anfang = {
+            (0, 0): (2, 2),
+            (2, 2): (0, 0),
+            (0, 2): (2, 0),
+            (2, 0): (0, 2)
+        }
+        seiten = [(0, 1), (1, 0), (1, 2), (2, 1)]
+        freie_seiten = []
+        freie_ecken = []
+        besetzte_ecken = []
+        ecken = [(0, 0), (0, 2), (2, 2), (2, 0)]
+        for i in ecken:
+            if self.__lesen(i[0], i[1]) == "":
+                freie_ecken.append(i)
+            else:
+                besetzte_ecken.append(i)
 
-        # Feld zurückgeben
+        for i in seiten:
+            if self.__lesen(i[0], i[1]) == "":
+                freie_seiten.append(i)
+
+        freie_felder = [(x, y) for x in range(3) for y in range(3) if self.__lesen(x, y) == ""]
+        #print(freie_felder)
+          
+        # Ein freies Feld zufällig auswählen
+        
+        # Sonderfall1:
+        for i in besetzte_ecken:
+            if self.__lesen(anfang[i][0], anfang[i][1]) == self.__lesen(i[0], i[1]) and self.__lesen(1, 1) != "":
+                return random.choice(freie_seiten)
+
+        # Sonderfall2:
+        if (self.__lesen(1, 0) and (self.__lesen(0, 2) or self.__lesen(2, 2)) == gegener_symbol) and self.__lesen(0, 0) == "":
+            return (0, 0)
+        elif (self.__lesen(2, 1) and (self.__lesen(0, 2) or self.__lesen(0, 2)) == gegener_symbol) and self.__lesen(2, 2) == "":
+            return (2, 2)
+        elif (self.__lesen(2, 1) and (self.__lesen(0, 0) or self.__lesen(2, 0)) == gegener_symbol) and self.__lesen(2, 0) == "":
+            return (2, 0)
+
+        
+        #Ecke auswählen
+        if freie_ecken != []:
+            zufälliges_feld = random.choice(freie_ecken)  
+        else:
+            zufälliges_feld = random.choice(freie_felder)
+
+        
         return zufälliges_feld
     
     # Gibt zurück, mit welchem Index in der übergebenen Reihe der aktuelle Spieler gewinnen kann
     # Falls Gewinnen nicht möglich ist, wird -1 zurückgegeben
     # reihe ist stets eine Liste mit drei Elementen ("O", "X" oder "")
     def __kann_gewinnen(self, reihe):
+        gegener_symbol = "X" if self.symbol == "O" else "O"
         if reihe.count(self.symbol) == 2 and reihe.count("") == 1:
+            return reihe.index("")
+        elif reihe.count(gegener_symbol) == 2 and reihe.count("") == 1:
             return reihe.index("")
         else:
             return None
@@ -94,9 +155,14 @@ class TTT(arcade.Window):
     # Falls nicht in diesem Zug gewonnen werden kann, aber im nächsten verloren, wird das hierfür (vom Gegner) benötigte Feld ausgewählt
     # Ansonsten wird ein zufälliges freies Feld ausgewählt
     def __mittelschlauer_zug(self):
+
         for y in range(len(self.spielfeld)):
             if (x := self.__kann_gewinnen(self.spielfeld[2 - y])) != None:
                 return (x, y)
+            # Kurzform für:
+            # x = self.__kann_gewinnen(self.spielfeld[2 - y])
+            # if x != None:
+            #   ...
         
         # *self.spielfeld entpackt self.spielfeld, d.h. statt einer Liste von drei Liste stehen dort nun getrennt drei Listen
         # zip fasst alle Einträge dieser Listen an der gleichen Stelle zu einem Tupel zusammen
@@ -107,13 +173,16 @@ class TTT(arcade.Window):
                 return (x, 2 - y)
         
         diagonal1, diagonal2 = [self.spielfeld[i][i] for i in range(3)], [self.spielfeld[i][2 - i] for i in range(3)]
-        print(diagonal1, self.__kann_gewinnen(diagonal1), diagonal2, self.__kann_gewinnen(diagonal2))
+        #print(diagonal1, self.__kann_gewinnen(diagonal1), diagonal2, self.__kann_gewinnen(diagonal2))
         if (x_y := self.__kann_gewinnen(diagonal1)) != None:
-            print(x_y, 2 - x_y)
             return (x_y, 2 - x_y)
         if (x_y := self.__kann_gewinnen(diagonal2)) != None:
-            print(2 - x_y, 2 - x_y)
             return (2 - x_y, 2 - x_y)
+        
+        # In der Mitte platzieren
+        if(self.__lesen(1, 1) == ""):
+            return (1, 1)
+        # Feld zurückgeben
             
         return self.__random_zug()
     
@@ -127,29 +196,31 @@ class TTT(arcade.Window):
             self.verzögerung_delta += delta_time
             if self.verzögerung_delta >= self.verzögerung:
                 feld = self.__mittelschlauer_zug()
-                print(feld)
-                spielstein = arcade.Sprite("Muschel.jpeg", 0.1) if self.symbol == "O" else arcade.Sprite("Seestern.jpeg", 0.1)
+                
+                #print(feld)
+                spielstein = arcade.Sprite("Muschel2.jpeg", 0.2) if self.symbol == "O" else arcade.Sprite("Seestern.jpeg", 0.1)
                 self.spielfeld[2 - feld[1]][feld[0]] = self.symbol
+                self.__setzen(feld[0], feld[1], self.symbol)
                 spielstein.center_x = 100 + feld[0] * 200
                 spielstein.center_y = 100 + feld[1] * 200
                 self.spielstein_liste.append(spielstein)
                 self.symbol = "X" if self.symbol == "O" else "O"
                 self.verzögerung_delta = 0
-                print(self.spielfeld)
+                #print(self.spielfeld)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
         if self.phase == 0:
             if 200 <= x <= 400 and 155 <= y <= 205:
                 self.phase = 1
-        elif self.phase == 1 and self.symbol_spieler[self.symbol] == "Mensch" and not self.vorbei and self.spielfeld[2 - y // 200][x // 200] == "":
+        elif self.phase == 1 and self.symbol_spieler[self.symbol] == "Mensch" and not self.vorbei and self.__lesen(x//200,y//200) == "":
             spielstein_position = self.__koordinaten_feldmittelpunkt(x, y)
-            spielstein = arcade.Sprite("Muschel.jpeg", 0.1) if self.symbol == "O" else arcade.Sprite("Seestern.jpeg", 0.1)
-            self.spielfeld[2 - y // 200][x // 200] = self.symbol
+            spielstein = arcade.Sprite("Muschel2.jpeg", 0.2) if self.symbol == "O" else arcade.Sprite("Seestern.jpeg", 0.1)
+            self.__setzen(x//200,y//200, self.symbol)
             spielstein.center_x = spielstein_position[0]
             spielstein.center_y = spielstein_position[1]
             self.spielstein_liste.append(spielstein)
             self.symbol = "X" if self.symbol == "O" else "O"
-            print(self.spielfeld)
+            #print(self.spielfeld)
 
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.Q:
@@ -159,13 +230,13 @@ class TTT(arcade.Window):
 
     def on_draw(self):
         if self.phase == 0:
-            arcade.draw_lrwh_rectangle_textured(0, 0, 600, 600, arcade.load_texture("startbild.jpg"))
+            arcade.draw_lrwh_rectangle_textured(0, 0, 600, 600, arcade.load_texture("bg.png"))
             arcade.draw_text("Willkommen bei Tic Tac Toe!", 300, 350, font_size=39, width=600, align="center", font_name="Kenney Blocks", anchor_x="center", anchor_y="center", multiline=True)
             arcade.draw_text("START", 300, 183, font_size=22, font_name="Kenney Pixel Square", anchor_x="center", anchor_y="center")
             arcade.draw_rectangle_outline(300, 180, 200, 50, arcade.color.WHITE, 5)
         elif self.phase == 1:
             # Ein Rechteck über das gesamte Spielfeld ((0, 0) der Eckpunkt unten links, Breite 600, Höhe 600) mit der Textur "bg.jpg"
-            arcade.draw_lrwh_rectangle_textured(0, 0, 600, 600, arcade.load_texture("startbild.jpg"))
+            arcade.draw_lrwh_rectangle_textured(0, 0, 600, 600, arcade.load_texture("bg.png"))
 
             # Eine Linie von (x=20, y=400) bis (x=580, y= 400) in der Farbe (104, 60, 63) und der Dicke 16 (obere waagerechte Linie)
             arcade.draw_line(20, 400, 580, 400, (104, 60, 63), 17)
@@ -185,11 +256,6 @@ class TTT(arcade.Window):
                 arcade.draw_text("R: Neustart", 300, 200, font_size=20, font_name="Kenney Pixel Square", anchor_x="center", anchor_y="center")
                 arcade.draw_text("Q: Beenden", 300, 150, font_size=20, font_name="Kenney Pixel Square", anchor_x="center", anchor_y="center")
                 self.vorbei = True
-    
-    def lesen(self, x, y):
-        return self.spielfeld[(y//200) * -1 + 2][x//200]
-    def schreiben(self, x, y):
-        return(x//200, (y//200) * -1 + 2)
 
 TTT()
 # Wir starten das Spiel
