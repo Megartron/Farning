@@ -1,0 +1,106 @@
+import processing.serial.*;
+
+Serial myPort = new Serial(this, "COM3", 9600);
+double distance;
+double degree;
+double x;
+double y;
+String receive;
+float x_old = 0;
+float y_old = 0;
+
+void setup(){
+  
+  size(600, 600);
+  background(0, 0, 0);
+}
+
+float Point_calculator_x(double degrees, double distance, double x){
+  double angleRadians = Math.toRadians(degrees);
+  
+  double delta_x = distance * Math.cos(angleRadians);
+  
+  double x_new = x + delta_x;
+  
+  return (float) x_new;
+}
+
+float Point_calculator_y(double degrees, double distance, double y){
+  double angleRadians = Math.toRadians(degrees);
+  
+  double delta_y = distance * Math.sin(angleRadians);
+  
+  double y_new = y + delta_y;
+  
+  return (float) y_new;
+}
+
+
+void draw(){
+  // Radar gestalten
+  float start = radians(0);
+  float stop = radians(180);
+  noFill();
+  stroke(#88F53C);
+  for(int i = 0; i < 10; i++){
+    int j = i * 50;
+    noFill();
+    stroke(#88F53C);
+    arc(300, 100, 500 - j, 500 - j, start, stop);
+  }
+  line(50, 100, 550, 100);
+  noStroke();
+  fill(0, 255, 0);
+  circle(300, 100, 15);
+  
+  
+  delay(100);
+  
+  distance = -1;
+  degree = -1;
+  
+  // Gegenstände eintragen
+  while(distance < 0 || degree < 0){
+    if ( myPort.available() > 0) {  
+      receive = myPort.readStringUntil('\n'); 
+    }
+    println("Receive", receive);
+    if(receive != null && receive.trim() != ""){
+      try {
+        double value = Double.parseDouble(receive.trim());
+        if(value > 300){
+         distance = value/1000;
+         if(distance > 100){
+           distance = 1000;
+         }
+         
+         }else if(value >= 1){
+           degree = 180 - value;
+           
+         }
+      }catch( NumberFormatException e){
+        println("The string is not a valid double: " + e.getMessage());
+      } 
+    }
+  }
+  
+  println("Distance:", distance);
+  println("Degrees:", degree); 
+  
+  
+  fill(0, 0, 0);
+  noStroke();
+  circle(x_old, y_old, 22);
+  
+  float x_circle = Point_calculator_x(degree, (distance * 5)/2, 300);
+  
+  float y_circle = Point_calculator_y(degree, (distance * 5)/2, 100);
+  
+  x_old = x_circle;
+  y_old = y_circle;
+  
+  
+  fill(255,255, 255);
+  circle(x_circle, y_circle, 20);
+  
+}
