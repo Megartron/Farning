@@ -1,5 +1,3 @@
-
-
 import csv
 import matplotlib.pyplot as plt
 import math
@@ -14,27 +12,37 @@ with open("iris_dataset.csv", newline="") as iris_dataset:
     for row in reader:
         iris_list.append(", ".join(row))
 
-
-
 setosa_sepal_length = []
 versicolor_sepal_length = []
 
-setosa = []
-versicolor = []
+setosa_sepal_width = []
+versicolor_sepal_width = []
+
+
+setosa_sepal_length_y = []
+versicolor_sepal_lenght_y = []
+
+setosa_sepal_widht_y = []
+versicolor_sepal_width_y = []
 
 for i in range(50):
-    setosa.append(1)
+    setosa_sepal_length_y.append(1)
 
 
 for i in range(50):
-    versicolor.append(0)
+    versicolor_sepal_lenght_y.append(-1)
 
 
 for i in iris_list[1:51]:
     setosa_sepal_length.append(float(i[0:3]))
 
+    setosa_sepal_width.append(float(i[5:8]))
+
 for i in iris_list[51:101]:
     versicolor_sepal_length.append(float(i[0:3]))
+    
+    versicolor_sepal_width.append(float(i[5:8]))
+
 
 # Durchschnittwerte ausrechnen
 def durchschnitt(werte):
@@ -55,27 +63,96 @@ def sigmoid(x):
 
 
 # Perzeptron
-def perzeptron(trainingswerte_x, trainingswerte_y):
-    w = 0.5
-    b = 0
+def perzeptron(x_werte_sepal_lenght, y_werte, x_werte_sepal_width):
 
     
 
+    w2 = 1
+    w1 = 1
+    b1 = 1
+    a = 0.01
+    
+    for j in range(1_000):
+        gesamt_fehler = 0
+        fehler_w1 = 0
+        fehler_w2 = 0
+        fehler_b1 = 0
+        for i in range(50):
+            x1 = x_werte_sepal_lenght[i]
+            x2 = x_werte_sepal_width[i]
+            y = y_werte[i]
 
-    return (w, b)
+            # Vorhersage
+            y_schätz = w1 * x1 + w2 * x2 + b1
 
-def lineare_funktion(w, x, b):
-    return w * x + b
+            # Fehlerberechnung
+            fehler = y_schätz - y
+            gesamt_fehler += fehler**2
+            
 
-def ableitung_für_w(w, x, y_wahr, b):
-    return -2 * x * (y_wahr - (w * x + b))
+            # Gradientenberechnung
+            fehler_w1 += fehler * x1
+            fehler_w2 += fehler * x2
+            fehler_b1 += fehler
 
-def ableitung_für_b(w, x, y_wahr, b):
-    return -2 * (y_wahr - (w * x + b))
+        # Parameter-Update (Gradient Descent)
+        w1 -= a * (fehler_w1/50)
+        w2 -= a * (fehler_w2/50)
+        b1 -= a * (fehler_b1/50)
 
+        if gesamt_fehler/50 < 0.0001:
+            break
+    
+    print("F: ", gesamt_fehler/50)
+
+    print((w1, w2, b1))
+    return (w1, w2, b1)
+
+
+
+def lineare_funktion(w1, w2, x, b):
+    return w1 * x + b
+
+def ableitung_für_w(y_schätz, x, y_wahr):
+    return -2 * x * (y_wahr - y_schätz)
+
+def ableitung_für_b(y_schätz, y_wahr):
+    return -2 * (y_wahr - y_schätz)
+
+
+
+def prüfung(w1, w2, b, lenght, width, y):
+    richtig = 0
+    falsch = 0
+    
+    print(y)
+    for i in range(50):
+        x1 = lenght[i]
+        x2 = width[i]
+        y_echt = y[i]
+
+        y_geschätzt = w1 * x1 + w2 * x2 + b
+        
+        y_geschätzt = 1 if y_geschätzt >= 0 else -1
+
+        if y_geschätzt == y_echt:
+            richtig += 1
+        else:
+            falsch += 1
+    
+    return (richtig, falsch)
+        
+
+
+
+
+
+
+"""
 def gradient_descent(x_werte, y_werte, w, b):
 
-    for wiederholen in range(1000):
+    #for wiederholen in range(1000):
+    while(True):
         for i in range(14):
             x = x_werte[i]
             y = y_werte[i]
@@ -84,14 +161,39 @@ def gradient_descent(x_werte, y_werte, w, b):
             fehler_b = ableitung_für_b(w, x, y, b)
 
             w += -0.001 * fehler_w
-            
             b += -0.001 * fehler_b
+        if abs(fehler_b) < 0.01 and abs(fehler_w) < 0.01:
+            break
     return (w, b)
+"""
 
 
 
-trainingswerte_x = [7.0, 6.4, 6.9, 5.1, 4.9, 6.3, 4.4, 5.6, 5.9, 6.1, 6.3, 4.6, 5.1, 4.8,]
-trainingswerte_y = [0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1]
+
+
+#trainingswerte_x = [7.0, 6.4, 6.9, 5.1, 4.9, 6.3, 4.4, 5.6, 5.9, 6.1, 6.3, 4.6, 5.1, 4.8,]
+#trainingswerte_y = [-1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, 1, 1, 1]
+
+trainingswerte_sepal_lenght_y = []
+trainingswerte_sepal_lenght_x = []
+
+trainingswerte_sepal_width_x = []
+
+for i in range(50):
+    if i % 2 == 0:
+        trainingswerte_sepal_lenght_y.append(1)
+        trainingswerte_sepal_lenght_x.append(setosa_sepal_length[i])
+
+        trainingswerte_sepal_width_x.append(setosa_sepal_width[i])
+
+    else:
+        trainingswerte_sepal_lenght_y.append(-1)
+        trainingswerte_sepal_lenght_x.append(versicolor_sepal_length[i])
+
+        trainingswerte_sepal_width_x.append(versicolor_sepal_width[i])
+
+
+#print(trainingswerte_sepal_width_x)
 
 sigmoid_versicolor = []
 for i in versicolor_sepal_length:
@@ -99,15 +201,65 @@ for i in versicolor_sepal_length:
 
 
 
-x = np.linspace(0, 8, 10)
-weight = gradient_descent(trainingswerte_x, trainingswerte_y, 0.5, 0)
-y = lineare_funktion(weight[0], x, weight[1])
+#x = np.linspace(0, 8, 10)
+weight = perzeptron(trainingswerte_sepal_lenght_x, trainingswerte_sepal_lenght_y, trainingswerte_sepal_width_x)
 
-#werte = perzeptron(trainingswerte_x, trainingswerte_y)
-#y = lineare_funktion(werte[0], x, werte[1])
 
-plt.plot(x, y)
-plt.plot(versicolor_sepal_length, sigmoid_versicolor, "go")
-plt.plot(versicolor_sepal_length, versicolor, "bo")
-#plt.plot(setosa_sepal_length, setosa, "ro")
+
+
+xx1 = np.array([5.1, 6.4, 4.7, 5.5, 5.0, 5.7, 4.6, 4.9, 4.4, 5.2, 5.4, 5.9, 4.8, 6.1, 5.8, 6.7, 5.4, 5.8, 5.7, 5.6, 5.4, 6.1, 4.6, 6.1, 4.8, 6.6, 5.0, 6.7, 5.2, 5.7, 4.8, 5.5, 5.2, 6.0, 4.9, 6.0, 5.5, 6.3, 4.4, 5.5, 5.0, 6.1, 4.4, 5.0, 5.1, 5.7, 5.1, 6.2, 5.3, 5.7])
+xx2 = np.array([3.5, 3.2, 3.2, 2.3, 3.6, 2.8, 3.4, 2.4, 2.9, 2.7, 3.7, 3.0, 3.0, 2.9, 4.0, 3.1, 3.9, 2.7, 3.8, 2.5, 3.4, 2.8, 3.6, 2.8, 3.4, 3.0, 3.4, 3.0, 3.4, 2.6, 3.1, 2.4, 4.1, 2.7, 3.1, 3.4, 3.5, 2.3, 3.0, 2.5, 3.5, 3.0, 3.2, 2.3, 3.8, 3.0, 3.8, 2.9, 3.7, 2.8])
+y = np.array([1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1])
+
+# Trainiere dein ADALINE-Modell (funktion muss vorher definiert sein)
+w1, w2, b1 = weight
+
+# Erstelle den Scatter-Plot
+plt.figure(figsize=(8, 6))
+#plt.scatter(xx1, xx2, c=y, cmap="bwr", edgecolors="k", alpha=0.8)
+plt.plot(versicolor_sepal_length, versicolor_sepal_width, "go")
+plt.plot(setosa_sepal_length, setosa_sepal_width, "ro")
+plt.xlabel("Sepal Length")
+plt.ylabel("Sepal Width")
+plt.title("ADALINE Entscheidungsgrenze")
+
+# Trennlinie berechnen und plotten
+x_min, x_max = min(xx1) - 0.5, max(xx1) + 0.5
+x_line = np.linspace(x_min, x_max, 100)
+y_line = - (w1 / w2) * x_line - (b1 / w2)
+plt.plot(x_line, y_line, "k--", label="Entscheidungsgrenze")
+
+
+print(prüfung(weight[0], weight[1], weight[2], setosa_sepal_length, setosa_sepal_width, setosa_sepal_length_y))
+print(prüfung(weight[0], weight[1], weight[2], versicolor_sepal_length, versicolor_sepal_width, versicolor_sepal_lenght_y))
+
+
+plt.legend()
 plt.show()
+
+
+
+
+
+
+
+
+"""
+
+print(prüfung(weight[0], weight[1], weight[2], setosa_sepal_length, setosa_sepal_width, setosa_sepal_length_y))
+print(prüfung(weight[0], weight[1], weight[2], versicolor_sepal_length, setosa_sepal_width, versicolor_sepal_lenght_y))
+
+
+#plt.plot(x, y)
+
+plt.plot(versicolor_sepal_length, versicolor_sepal_width, "go")
+plt.plot(setosa_sepal_length, setosa_sepal_width, "ro")
+plt.title("Grün: -1; Rot: 1")
+plt.show()
+"""
+#y = lineare_funktion(weight[0], x, weight[1])
+
+
+
+#print(prüfung(weight[0], weight[1], setosa_sepal_length, setosa_sepal_length_y))
+#print(prüfung(weight[0], weight[1], versicolor_sepal_length, versicolor_sepal_lenght_y))
