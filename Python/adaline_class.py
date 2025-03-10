@@ -178,7 +178,7 @@ for i in iris_list[1:101]:
     reihe.append(width)
     reihe.append(petal_lenght)
     reihe.append(petal_width)
-    if i[20:] == "Iris-setosa":
+    if i[20:] == "setosa":
         reihe.append(1)
     else:
         reihe.append(-1)
