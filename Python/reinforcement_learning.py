@@ -10,12 +10,21 @@ class hexapawn():
         self.figuren = {}
         self.pos = []
         self.buttons = []
+        self.button_reset = None
         self.current_spieler = "X"
         self.züge = 0
         self.comp = True
-        
+        self.postionen_zug2 = []
+        self.postionen_zug4 = []
+        self.postionen_zug6 = []
 
     def spielfeld_erstellen(self):
+        self.figuren = {}
+        self.pos = []
+        self.buttons = []
+        self.current_spieler = "X"
+        self.züge = 0
+        
         for r in range(3):
             row_buttons = []
             for c in range(3):
@@ -31,6 +40,10 @@ class hexapawn():
                     self.figuren[(r, c)] = "X"
                     btn.config(text= "X")
             self.buttons.append(row_buttons)
+
+        print("nach erstellen: ", self.postionen_zug2)
+    
+
         
     def reset_colors(self):
         for r in range(3):
@@ -43,7 +56,7 @@ class hexapawn():
             return
         if len(self.pos) != 0 and cords == self.pos[0]:
             return
-        print(self.buttons[cords[0]][cords[1]])
+
         self.buttons[r][c].config(fg = "red", highlightbackground="red")
         self.pos.append((cords))
 
@@ -52,25 +65,30 @@ class hexapawn():
             self.reset_colors()
             canmove = self.can_move()
             if canmove:
+                self.züge += 1
                 self.move()
 
             if canmove:
                 self.current_spieler = "O" if self.current_spieler == "X" else "X"
             if canmove and self.gewinnprüfung(r, c):
+                self.button_reset = tk.Button(self.root, text = "New game", command= self.new_game)
+                self.button_reset.place(x=100, y=50)
                 print("Gewonnen!!")
                 return
-            self.züge += 1
+            
             self.pos = []
 
             if self.comp and canmove:
                 self.random_zug()
+        
+        #print("nach random zug: ",self.postionen_zug2)
 
         
     def random_zug(self):
         eigene_felder = []
         felder = []
         for i in self.figuren.keys():
-            if self.figuren[i] == "O":
+            if self.figuren[i] == self.current_spieler:
                 eigene_felder.append(i)
             else:
                 felder.append(i)
@@ -79,12 +97,12 @@ class hexapawn():
         for _ in range(3):
             figur = random.choice(eigene_felder)
             self.pos.append(figur)
-            print("Figur: ", figur)
+
             self.pos.append((0, 0))
             mögliche_züge = []
 
             # prüfe mit move() welche züge erlaubt sind
-            print("felder: ", felder)
+
             for i in felder:
                 self.pos[1] = i
                 if self.can_move():
@@ -95,17 +113,46 @@ class hexapawn():
             else:
                 self.pos = []
                 eigene_felder.remove(figur)
-            
+
+
         zug = random.choice(mögliche_züge)
         self.pos[1] = zug
         self.move()
-        self.current_spieler = "X"
+        self.züge += 1
+        self.current_spieler = "O" if self.current_spieler == "X" else "X"
         if self.gewinnprüfung(zug[0], zug[1]):
+            self.button_reset = tk.Button(self.root, text = "New game", command= self.new_game)
+            self.button_reset.place(x=100, y=50)
             print("Gewonnen!!")
             return
         self.pos = []
+        self.buttons[figur[0]][figur[1]].config(fg = "green", highlightbackground="green")
+        self.buttons[zug[0]][zug[1]].config(fg = "green", highlightbackground="green")
 
+        if self.züge == 2:
+            d = {}
+            if self.figuren not in self.postionen_zug2:
+                for i in self.figuren:
+                    d[i] = self.figuren[i]
+                
+                self.postionen_zug2.append(d)
+                
+            #print(len(self.postionen_zug2))
+        elif self.züge == 4:
+            d = {}
+            if self.figuren not in self.postionen_zug4:
+                for i in self.figuren:
+                    d[i] = self.figuren[i]
+                
+                self.postionen_zug4.append(d)
+                
+            #print(len(self.postionen_zug2))
 
+        
+
+    def new_game(self):
+        self.button_reset.destroy()
+        self.spielfeld_erstellen()
 
     def can_move(self):
         target = self.pos[0]
@@ -219,5 +266,7 @@ root = tk.Tk()
 p = hexapawn(root)
 
 p.spielfeld_erstellen()
+
+
 
 root.mainloop()
