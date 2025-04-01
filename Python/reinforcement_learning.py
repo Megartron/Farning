@@ -6,12 +6,13 @@ class hexapawn():
 
     def __init__(self, root):
         self.root = root
-        self.root.title("3x3 Grid GUI")
+        self.root.title("Hexapawn")
         self.figuren = {}
         self.pos = []
         self.buttons = []
         self.current_spieler = "X"
         self.züge = 0
+        self.comp = True
         
 
     def spielfeld_erstellen(self):
@@ -30,7 +31,6 @@ class hexapawn():
                     self.figuren[(r, c)] = "X"
                     btn.config(text= "X")
             self.buttons.append(row_buttons)
-        print(self.buttons)
         
     def reset_colors(self):
         for r in range(3):
@@ -50,14 +50,101 @@ class hexapawn():
         if len(self.pos) == 2:
             time.sleep(0.1)
             self.reset_colors()
-            moved = self.move()
-            if moved:
+            canmove = self.can_move()
+            if canmove:
+                self.move()
+
+            if canmove:
                 self.current_spieler = "O" if self.current_spieler == "X" else "X"
-            if moved and self.gewinnprüfung(r, c):
+            if canmove and self.gewinnprüfung(r, c):
                 print("Gewonnen!!")
+                return
             self.züge += 1
             self.pos = []
 
+            if self.comp and canmove:
+                self.random_zug()
+
+        
+    def random_zug(self):
+        eigene_felder = []
+        felder = []
+        for i in self.figuren.keys():
+            if self.figuren[i] == "O":
+                eigene_felder.append(i)
+            else:
+                felder.append(i)
+        
+        # Zufällige Figur auswählen
+        for _ in range(3):
+            figur = random.choice(eigene_felder)
+            self.pos.append(figur)
+            print("Figur: ", figur)
+            self.pos.append((0, 0))
+            mögliche_züge = []
+
+            # prüfe mit move() welche züge erlaubt sind
+            print("felder: ", felder)
+            for i in felder:
+                self.pos[1] = i
+                if self.can_move():
+                    mögliche_züge.append(i)
+
+            if len(mögliche_züge) > 0:
+                break
+            else:
+                self.pos = []
+                eigene_felder.remove(figur)
+            
+        zug = random.choice(mögliche_züge)
+        self.pos[1] = zug
+        self.move()
+        self.current_spieler = "X"
+        if self.gewinnprüfung(zug[0], zug[1]):
+            print("Gewonnen!!")
+            return
+        self.pos = []
+
+
+
+    def can_move(self):
+        target = self.pos[0]
+        destination = self.pos[1]
+
+        if self.figuren[target] == "":
+            #print("Fail!")
+            return False
+        
+        if self.figuren[target] == "X":
+            if target[0] - destination[0] != 1:
+                #print("Fail!")
+                return False
+        elif self.figuren[target] == "O":
+            if target[0] - destination[0] != -1:
+                #print("Fail!")  
+                return False
+        if self.figuren[destination] != "":
+            if abs(target[1] - destination[1]) != 1 or self.figuren[target] == self.figuren[destination]:
+                #print("Fail!")
+                return False
+        else:
+            if target[1] - destination[1] != 0:
+                #print("Fail!")
+                return False
+
+        return True
+    
+    def move(self):
+        target = self.pos[0]
+        destination = self.pos[1]
+        
+        self.figuren[destination] = self.figuren[target]
+        self.figuren[target] = ""
+
+        self.buttons[target[0]][target[1]].config(text = self.figuren[target])
+        self.buttons[destination[0]][destination[1]].config(text = self.figuren[destination])
+    
+    
     def gewinnprüfung(self, r, c):
         # Wenn Bauer am Ende angelangt
         cords = (r, c)
@@ -86,8 +173,6 @@ class hexapawn():
                 
                 if len(list_x) == hindernisse:
                     return True
-
-
         elif figur == "O":
             if r == 2:
                 return True
@@ -100,7 +185,6 @@ class hexapawn():
                 for i in self.figuren:
                     if self.figuren[i] == "O":
                         list_o.append(i)
-                print(list_o)
 
                 hindernisse = 0
                 
@@ -113,11 +197,8 @@ class hexapawn():
                         if self.figuren[feld_davor] != "" and self.figuren[(feld_davor[0], 1)] != "X":
                             hindernisse += 1
                 
-                print(hindernisse)
                 if len(list_o) == hindernisse:
                     return True
-
-        
         # Wenn es keine Bauern gibt
         anzahl_x = 0
         anzahl_o = 0
@@ -132,52 +213,6 @@ class hexapawn():
         elif anzahl_o == 0:
             return True
         
-    def random_zug(self):
-        eigene_felder = []
-        for i in self.figuren:
-            if self.figuren[i] == "O":
-                eigene_felder.append[i]
-        
-        # Zufällige Figur auswählen
-        figur = random.choice(eigene_felder)
-
-        mögliche_züge = []
-        # prüfe mit move() welche züge erlaubt sind
-
-
-    def move(self):
-        print(self.pos)
-        target = self.pos[0]
-        destination = self.pos[1]
-
-        if self.figuren[target] == "":
-            print("Fail!")
-            return False
-        
-        if self.figuren[target] == "X":
-            if target[0] - destination[0] != 1:
-                print("Fail!")
-                return False
-        elif self.figuren[target] == "O":
-            if target[0] - destination[0] != -1:
-                print("Fail!")  
-                return False
-        if self.figuren[destination] != "":
-            if abs(target[1] - destination[1]) != 1 or self.figuren[target] == self.figuren[destination]:
-                print("Fail!")
-                return
-        else:
-            if target[1] - destination[1] != 0:
-                print("Fail!")
-                return False
-        
-        self.figuren[destination] = self.figuren[target]
-        self.figuren[target] = ""
-
-        self.buttons[target[0]][target[1]].config(text = self.figuren[target])
-        self.buttons[destination[0]][destination[1]].config(text = self.figuren[destination])
-
-        return True
 
 root = tk.Tk()
 
