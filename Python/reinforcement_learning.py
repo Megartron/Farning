@@ -40,9 +40,21 @@ class hexapawn():
                     self.figuren[(r, c)] = "X"
                     btn.config(text= "X")
             self.buttons.append(row_buttons)
-
-        print("nach erstellen: ", self.postionen_zug2)
     
+    def spielfeld_erstellen_auto(self):
+        self.figuren = {}
+        self.pos = []
+        self.buttons = []
+        self.current_spieler = "X"
+        self.züge = 0
+        
+        for r in range(3):
+            for c in range(3):
+                self.figuren[(r, c)] = ""
+                if r == 0:
+                    self.figuren[(r, c)] = "O"
+                elif r == 2:
+                    self.figuren[(r, c)] = "X"    
 
         
     def reset_colors(self):
@@ -83,6 +95,96 @@ class hexapawn():
         
         #print("nach random zug: ",self.postionen_zug2)
 
+
+
+
+
+
+
+    def auto(self):
+        self.spielfeld_erstellen()
+        for _ in range(1000):
+            done = False
+            while not done:
+                done = self.random_zug_auto()
+            
+            self.spielfeld_erstellen_auto()
+        
+        print("Zug 2: ", self.postionen_zug2)
+        print("Zug 4: ", self.postionen_zug4)
+        print("Zug 6: ", self.postionen_zug6)
+        print("Zug 2: ", len(self.postionen_zug2), "; Zug 4: ", len(self.postionen_zug4), "; Zug 6: ", len(self.postionen_zug6))
+        print("Finished")
+
+    def mögliche_züge_für_jede_figur(self, eigene_felder, felder):
+        figuren_züge = {}
+        mögliche_züge = []
+        for figur in eigene_felder:
+
+            self.pos.append(figur)
+            self.pos.append(0)
+            mögliche_züge = []
+
+            # prüfe mit can_move() welche züge erlaubt sind
+
+            for i in felder:
+                self.pos[1] = i
+                if self.can_move():
+                    mögliche_züge.append(i)
+
+            figuren_züge[figur] = mögliche_züge
+            self.pos = []
+
+            
+
+
+
+
+
+
+    def random_zug_auto(self):
+        eigene_felder = []
+        felder = []
+        for i in self.figuren.keys():
+            if self.figuren[i] == self.current_spieler:
+                eigene_felder.append(i)
+            else:
+                felder.append(i)
+        
+        # Zufällige Figur auswählen
+        for _ in range(3):
+            figur = random.choice(eigene_felder)
+            self.pos.append(figur)
+
+            self.pos.append(0)
+            mögliche_züge = []
+
+            # prüfe mit can_move() welche züge erlaubt sind
+
+            for i in felder:
+                self.pos[1] = i
+                if self.can_move():
+                    mögliche_züge.append(i)
+
+            if len(mögliche_züge) > 0:
+                break
+            else:
+                self.pos = []
+                eigene_felder.remove(figur)
+
+        zug = random.choice(mögliche_züge)
+        self.pos[1] = zug
+        self.move(True)
+        self.züge += 1
+        self.current_spieler = "O" if self.current_spieler == "X" else "X"
+        self.map_positions()
+        #print("Zug 2: ", len(self.postionen_zug2), "; Zug 4: ", len(self.postionen_zug4), "; Zug 6: ", len(self.postionen_zug6))
+        if self.gewinnprüfung(zug[0], zug[1]):
+            print("Gewonnen!!")
+            return True
+        self.pos = []
+        return False
+        
         
     def random_zug(self):
         eigene_felder = []
@@ -98,7 +200,7 @@ class hexapawn():
             figur = random.choice(eigene_felder)
             self.pos.append(figur)
 
-            self.pos.append((0, 0))
+            self.pos.append(0)
             mögliche_züge = []
 
             # prüfe mit move() welche züge erlaubt sind
@@ -120,17 +222,21 @@ class hexapawn():
         self.move()
         self.züge += 1
         self.current_spieler = "O" if self.current_spieler == "X" else "X"
+        self.map_positions()
+        print("Zug 2: ", len(self.postionen_zug2), "; Zug 4: ", len(self.postionen_zug4), "; Zug 6: ", len(self.postionen_zug6))
         if self.gewinnprüfung(zug[0], zug[1]):
             self.button_reset = tk.Button(self.root, text = "New game", command= self.new_game)
             self.button_reset.place(x=100, y=50)
             print("Gewonnen!!")
-            return
+            return 
         self.pos = []
         self.buttons[figur[0]][figur[1]].config(fg = "green", highlightbackground="green")
         self.buttons[zug[0]][zug[1]].config(fg = "green", highlightbackground="green")
+        return 
 
+    def map_positions(self):
+        d = {}
         if self.züge == 2:
-            d = {}
             if self.figuren not in self.postionen_zug2:
                 for i in self.figuren:
                     d[i] = self.figuren[i]
@@ -139,14 +245,17 @@ class hexapawn():
                 
             #print(len(self.postionen_zug2))
         elif self.züge == 4:
-            d = {}
             if self.figuren not in self.postionen_zug4:
                 for i in self.figuren:
                     d[i] = self.figuren[i]
-                
                 self.postionen_zug4.append(d)
-                
-            #print(len(self.postionen_zug2))
+
+        elif self.züge == 6:
+            if self.figuren not in self.postionen_zug6:
+                for i in self.figuren:
+                    d[i] = self.figuren[i]
+                self.postionen_zug6.append(d)
+        
 
         
 
@@ -181,15 +290,15 @@ class hexapawn():
 
         return True
     
-    def move(self):
+    def move(self, auto):
         target = self.pos[0]
         destination = self.pos[1]
         
         self.figuren[destination] = self.figuren[target]
         self.figuren[target] = ""
-
-        self.buttons[target[0]][target[1]].config(text = self.figuren[target])
-        self.buttons[destination[0]][destination[1]].config(text = self.figuren[destination])
+        if not auto:
+            self.buttons[target[0]][target[1]].config(text = self.figuren[target])
+            self.buttons[destination[0]][destination[1]].config(text = self.figuren[destination])
     
     
     def gewinnprüfung(self, r, c):
@@ -265,7 +374,7 @@ root = tk.Tk()
 
 p = hexapawn(root)
 
-p.spielfeld_erstellen()
+p.auto()
 
 
 
