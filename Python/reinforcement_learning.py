@@ -13,10 +13,16 @@ class hexapawn():
         self.button_reset = None
         self.current_spieler = "X"
         self.züge = 0
-        self.comp = True
+        self.comp = False
         self.postionen_zug2 = []
         self.postionen_zug4 = []
         self.postionen_zug6 = []
+        self.züge_2 = []
+        self.züge_4 = []
+        self.züge_6 = []
+        self.bewertung_zug6 = {}
+        self.bewertung_zug2 = {}
+        self.bewertung_zug4 = {}
 
     def spielfeld_erstellen(self):
         self.figuren = {}
@@ -91,7 +97,7 @@ class hexapawn():
             self.pos = []
 
             if self.comp and canmove:
-                self.random_zug()
+                self.comp()
         
         #print("nach random zug: ",self.postionen_zug2)
 
@@ -110,10 +116,16 @@ class hexapawn():
             
             self.spielfeld_erstellen_auto()
         
-        print("Zug 2: ", self.postionen_zug2)
-        print("Zug 4: ", self.postionen_zug4)
-        print("Zug 6: ", self.postionen_zug6)
-        print("Zug 2: ", len(self.postionen_zug2), "; Zug 4: ", len(self.postionen_zug4), "; Zug 6: ", len(self.postionen_zug6))
+        self.bewertung_zug6 = self.bewertungen_init(self.züge_6, 100)
+        self.bewertung_zug2 = self.bewertungen_init(self.züge_2, 100)
+        self.bewertung_zug4 = self.bewertungen_init(self.züge_4, 100)
+
+        print("Zug 2: ", self.züge_2)
+        print("Zug 4: ", self.züge_4)
+        print("Zug 6: ", self.züge_6)
+        print("Zug 2: ", len(self.züge_2), "; Zug 4: ", len(self.züge_4), "; Zug 6: ", len(self.züge_6))
+        print("_--------------------")
+        print(self.bewertung_zug4)
         print("Finished")
 
     def mögliche_züge_für_jede_figur(self, eigene_felder, felder):
@@ -135,8 +147,14 @@ class hexapawn():
             figuren_züge[figur] = mögliche_züge
             self.pos = []
 
-            
 
+
+            
+    def bewertungen_init(self, züge, bewertung_start):
+        d = {}
+        for i in züge:
+            d[(i[0], i[1])] = bewertung_start
+        return d
 
 
 
@@ -184,6 +202,47 @@ class hexapawn():
             return True
         self.pos = []
         return False
+    
+
+
+    def computer(self):
+        if self.züge == 1:
+            züge_bewertung = self.bewertung_zug2
+        elif self.züge == 3:
+            züge_bewertung = self.bewertung_zug4
+        elif self.züge == 5:
+            züge_bewertung = self.bewertung_zug6
+        else:
+            raise Exception("Fehler bei Züge")
+
+        max_belohnung = max(züge_bewertung[j] for j in züge_bewertung)
+
+        züge_alle = []
+        for i in züge_bewertung:
+            if züge_bewertung[i] > max_belohnung - 21:
+                züge_alle.append(i)
+        
+        züge_möglich = []
+        for i in züge_alle:
+            self.pos = i
+            if self.can_move():
+                züge_möglich.append(i)
+        
+        zug = random.choice(züge_möglich)
+        self.pos = zug
+        self.move(False)
+        self.züge += 1
+        self.current_spieler = "O" if self.current_spieler == "X" else "X"
+        self.map_positions()
+        if self.gewinnprüfung(zug[0], zug[1]):
+            print("Gewonnen!!")
+            return True
+        self.pos = []
+
+            
+
+
+
         
         
     def random_zug(self):
@@ -223,7 +282,7 @@ class hexapawn():
         self.züge += 1
         self.current_spieler = "O" if self.current_spieler == "X" else "X"
         self.map_positions()
-        print("Zug 2: ", len(self.postionen_zug2), "; Zug 4: ", len(self.postionen_zug4), "; Zug 6: ", len(self.postionen_zug6))
+        
         if self.gewinnprüfung(zug[0], zug[1]):
             self.button_reset = tk.Button(self.root, text = "New game", command= self.new_game)
             self.button_reset.place(x=100, y=50)
@@ -240,7 +299,7 @@ class hexapawn():
             if self.figuren not in self.postionen_zug2:
                 for i in self.figuren:
                     d[i] = self.figuren[i]
-                
+                self.züge_2.append(self.pos)
                 self.postionen_zug2.append(d)
                 
             #print(len(self.postionen_zug2))
@@ -248,12 +307,14 @@ class hexapawn():
             if self.figuren not in self.postionen_zug4:
                 for i in self.figuren:
                     d[i] = self.figuren[i]
+                self.züge_4.append(self.pos)
                 self.postionen_zug4.append(d)
 
         elif self.züge == 6:
             if self.figuren not in self.postionen_zug6:
                 for i in self.figuren:
                     d[i] = self.figuren[i]
+                self.züge_6.append(self.pos)
                 self.postionen_zug6.append(d)
         
 
@@ -374,8 +435,6 @@ root = tk.Tk()
 
 p = hexapawn(root)
 
-p.auto()
-
-
+p.spielfeld_erstellen()
 
 root.mainloop()
