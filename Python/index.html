@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.png" type="image/x-icon">
+    <title>HexaPawn</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue";
+            text-align: center;
+            background-color: hsl(0, 0%, 10%);
+        }
+        h1 {
+            font-size: 5vw;
+            color: white;
+        }
+        #spiel {
+            display: table;
+            margin: auto;
+            border: 1vw solid black;
+        }
+        .table-row {
+            display: table-row;
+        }
+        .table-cell {
+            display: table-cell;
+            width: 12vw;
+            height: 12vw;
+            vertical-align: middle;
+        }
+        .table-cell img {
+            height: 80%;
+            pointer-events: none;
+        }
+        .black {
+            background-color: black;
+        }
+        .white {
+            background-color: white;
+        }
+        .black.grün {
+            background-color: #00674b;
+        }
+        .white.grün {
+            background-color: #ACE1AF;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>HexaPawn</h1>
+    <div id="spiel">
+        <div class="table-row">
+            <div id="00" class="table-cell white">
+                <img>
+            </div>
+            <div id="01" class="table-cell black">
+                <img>
+            </div>
+            <div id="02" class="table-cell white">
+                <img>
+            </div>
+        </div>
+        <div class="table-row">
+            <div id="10" class="table-cell black">
+                <img>
+            </div>
+            <div id="11" class="table-cell white">
+                <img>
+            </div>
+            <div id="12" class="table-cell black">
+                <img>
+            </div>
+        </div>
+        <div class="table-row">
+            <div id="20" class="table-cell white">
+                <img>
+            </div>
+            <div id="21" class="table-cell black">
+                <img>
+            </div>
+            <div id="22" class="table-cell white">
+                <img>
+            </div>
+        </div>
+    </div>
+    <script>
+        let spielfeld = [["s", "s", "s"],
+                    ["", "", ""],
+                    ["w", "w", "w"]];
+
+        let zugphase = "auswahl";
+        let gewähltesFeld = null;
+        let aktueller_spieler = "w";
+
+        function spielfeldAktualisieren() {
+            for (i = 0; i < spielfeld.length; i++) {
+                for (j = 0; j < spielfeld[i].length; j++) {
+                    if (spielfeld[i][j]) {
+                        document.getElementById("" + i + j).children[0].style.display = "inline";
+                        document.getElementById("" + i + j).children[0].src = spielfeld[i][j] + ".jpg";
+                    } else
+                        document.getElementById("" + i + j).children[0].style.display = "none";
+                }
+            }
+        }
+
+        spielfeldAktualisieren()
+
+        document.addEventListener("click", e => {
+            
+            if (zugphase == "auswahl") {
+            Array.from(document.getElementsByClassName("grün")).forEach(el => el.classList.remove("grün"));
+
+                for (i = 0; i < spielfeld.length; i++) {
+                    for (j = 0; j < spielfeld[i].length; j++) {
+                        if (e.target.id == "" + i + j && spielfeld[i][j] == aktueller_spieler)
+                            möglicheZüge(i, j);
+                    }
+                }
+                if (Array.from(document.getElementsByClassName("grün")).length > 0) {
+                    zugphase = "setzen";
+                    gewähltesFeld = e.target.id;
+                }
+            } else if (zugphase == "setzen") {
+                let geklicktesFeld = e.target.id;
+                let geklickteZeile = parseInt(geklicktesFeld[0]);
+                let geklickteSpalte = parseInt(geklicktesFeld[1]);
+                if (e.target.classList.contains("grün")) {
+                    spielfeld[parseInt(gewähltesFeld[0])][parseInt(gewähltesFeld[1])] = "";
+                    spielfeld[geklickteZeile][geklickteSpalte] = aktueller_spieler;
+                    spielfeldAktualisieren()
+                    gewinnprüfung();
+                    zugphase = "auswahl";
+                    aktueller_spieler = aktueller_spieler == "w" ? "s" : "w";
+                    Array.from(document.getElementsByClassName("grün")).forEach(el => el.classList.remove("grün"));
+                } else {
+                    zugphase = "auswahl";
+                }
+            }
+        });
+
+        function gewinnprüfung(){
+            let anzahl_gegner = 0;
+            let gegenspieler = aktueller_spieler == "w" ? "s" : "w";
+            for(let i = 0; i < 3; i++){
+                for(let j = 0; j < 3; j++){
+                    if(spielfeld[i][j] == gegenspieler){
+                        anzahl_gegner++;
+                    } else if (spielfeld[i][j] == aktueller_spieler && 
+                    ((aktueller_spieler == "w" && i == 0) || (aktueller_spieler == "s" && i == 2))){
+                        alert("Gewonnen!");
+                    }
+                }
+            }
+            if(anzahl_figuren == 0){
+                alert("Gewonnen!");
+            }
+        }
+
+        function möglicheZüge(i, j) {
+            document.getElementById("" + i + j).classList.add("grün");
+            farbe = spielfeld[i][j];
+            if (farbe == "w") {
+                möglicheFelder = [];
+                if (j - 1 >= 0 && spielfeld[i - 1][j - 1] == "s")
+                    möglicheFelder.push([i - 1, j - 1]);
+                if (spielfeld[i - 1][j] == "")
+                    möglicheFelder.push([i - 1, j]);
+                if (j + 1 <= 2 && spielfeld[i - 1][j + 1] == "s")
+                    möglicheFelder.push([i - 1, j + 1])
+
+                möglicheFelder.forEach(feld => {
+                    document.getElementById("" + feld[0] + feld[1]).classList.add("grün");
+                });
+            } else if (farbe == "s") {
+                möglicheFelder = [];
+                if (j - 1 >= 0 && spielfeld[i + 1][j - 1] == "w")
+                    möglicheFelder.push([i + 1, j - 1]);
+                if (spielfeld[i + 1][j] == "")
+                    möglicheFelder.push([i + 1, j]);
+                if (j + 1 <= 2 && spielfeld[i + 1][j + 1] == "w")
+                    möglicheFelder.push([i + 1, j + 1])
+
+                möglicheFelder.forEach(feld => {
+                    document.getElementById("" + feld[0] + feld[1]).classList.add("grün");
+                });
+            }
+        }
+
+    </script>
+</body>
+
+</html>
