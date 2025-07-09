@@ -1,3 +1,5 @@
+#include <TaskScheduler.h>
+
 #define rechts_v 5
 #define links_v 6
 #define rechts_motor 7
@@ -7,8 +9,15 @@
 #define sensor_r A2
 #define sensor_m A1
 
+Scheduler runner;
 int i = 0;
 int letzer_turn = 0;
+
+
+void schlange();
+
+//Task finden(10, TASK_FOREVER, &linie_kontrollieren);
+
 
 void setup(){
   Serial.begin(9600);
@@ -22,9 +31,10 @@ void setup(){
   pinMode(sensor_m, INPUT);
   pinMode(sensor_r, INPUT);
 
+  unsigned long startTime = millis();
+
   digitalWrite(start, HIGH);
 }
-
 
 void links_suchen(){
   int farbe_mitte = (analogRead(sensor_m) >  500) ? LOW : HIGH;
@@ -52,7 +62,36 @@ void rechts_suchen(){
   letzer_turn = 1;
 }
 
-void loop(){
+void linie_kontrollieren(){
+
+}
+
+
+void linie_finden(){
+  analogWrite(links_v, 50);
+  analogWrite(rechts_v, 20);
+  int i = 0;
+  
+  while (true){    
+    analogWrite(links_v, 30);
+    analogWrite(rechts_v, 30);
+    int farbe_links = (analogRead(sensor_l) > 500) ? LOW : HIGH;
+    int farbe_mitte = (analogRead(sensor_m) >  500) ? LOW : HIGH;
+    int farbe_rechts = (analogRead(sensor_r) > 500) ? LOW : HIGH;
+
+    if (farbe_links == LOW || farbe_rechts == LOW || farbe_mitte == LOW){
+      analogWrite(links_v, 0);
+      analogWrite(rechts_v, 0);
+    
+      if (farbe_links == LOW || farbe_rechts == LOW || farbe_mitte == LOW){
+        return;
+      }
+    }
+  }
+}
+
+
+void loop(){ //--------------------------------------------------------------------------------------------------------------
   int farbe_links = (analogRead(sensor_l) > 500) ? LOW : HIGH;
   int farbe_mitte = (analogRead(sensor_m) >  500) ? LOW : HIGH;
   int farbe_rechts = (analogRead(sensor_r) > 500) ? LOW : HIGH;
@@ -76,7 +115,6 @@ void loop(){
     links_suchen();
 
   }else{
-
 
     Serial.println("keine linie");
 
