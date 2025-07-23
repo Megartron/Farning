@@ -1,4 +1,3 @@
-#include <TaskScheduler.h>
 
 #define rechts_v 5
 #define links_v 6
@@ -9,12 +8,17 @@
 #define sensor_r A2
 #define sensor_m A1
 
-Scheduler runner;
+
 int i = 0;
 int letzer_turn = 0;
 
+int v_normal = 50;
+int v_bremsen = 0;
 
-void schlange();
+int anzahl_r = 0;
+int anzahl_l = 0;
+int kontrolle = 50;
+
 
 //Task finden(10, TASK_FOREVER, &linie_kontrollieren);
 
@@ -39,11 +43,11 @@ void setup(){
 void links_suchen(){
   int farbe_mitte = (analogRead(sensor_m) >  500) ? LOW : HIGH;
   digitalWrite(links_motor, LOW);
-  analogWrite(links_v, 20);
-  analogWrite(rechts_v, 50);
+  analogWrite(links_v, v_bremsen);
+  analogWrite(rechts_v, v_normal);
   
   while (farbe_mitte != LOW){
-    farbe_mitte = (analogRead(sensor_m) > 400) ? LOW : HIGH;
+    farbe_mitte = (analogRead(sensor_m) > 500) ? LOW : HIGH;
   }
 
   letzer_turn = -1;
@@ -52,42 +56,14 @@ void links_suchen(){
 void rechts_suchen(){
   int farbe_mitte = (analogRead(sensor_m) >  500) ? LOW : HIGH;
   digitalWrite(rechts_motor, LOW);
-  analogWrite(links_v, 50);
-  analogWrite(rechts_v, 20);
+  analogWrite(links_v, v_normal);
+  analogWrite(rechts_v, v_bremsen);
   
   while (farbe_mitte != LOW){
-    farbe_mitte = (analogRead(sensor_m) > 400) ? LOW : HIGH;
+    farbe_mitte = (analogRead(sensor_m) > 500) ? LOW : HIGH;
   }
 
   letzer_turn = 1;
-}
-
-void linie_kontrollieren(){
-
-}
-
-
-void linie_finden(){
-  analogWrite(links_v, 50);
-  analogWrite(rechts_v, 20);
-  int i = 0;
-  
-  while (true){    
-    analogWrite(links_v, 30);
-    analogWrite(rechts_v, 30);
-    int farbe_links = (analogRead(sensor_l) > 500) ? LOW : HIGH;
-    int farbe_mitte = (analogRead(sensor_m) >  500) ? LOW : HIGH;
-    int farbe_rechts = (analogRead(sensor_r) > 500) ? LOW : HIGH;
-
-    if (farbe_links == LOW || farbe_rechts == LOW || farbe_mitte == LOW){
-      analogWrite(links_v, 0);
-      analogWrite(rechts_v, 0);
-    
-      if (farbe_links == LOW || farbe_rechts == LOW || farbe_mitte == LOW){
-        return;
-      }
-    }
-  }
 }
 
 
@@ -99,60 +75,91 @@ void loop(){ //-----------------------------------------------------------------
   digitalWrite(rechts_motor, HIGH);
   digitalWrite(links_motor, HIGH);
 
-  if (farbe_mitte == LOW){
-    Serial.println("m");
-    analogWrite(links_v, 50);
-    analogWrite(rechts_v, 50);
-  }
+  if (farbe_links == LOW && farbe_rechts == LOW && farbe_mitte == LOW) {
+    
+    bool richtung = (random(0, 101) > kontrolle);
 
+    if(richtung){
+      digitalWrite(links_motor, 0);
+      digitalWrite(rechts_motor, 0);
+
+      analogWrite(links_v, 255);
+      analogWrite(rechts_v, 200);
+      anzahl_l++;
+    }else{
+      digitalWrite(links_motor, 0);
+      digitalWrite(rechts_motor, 0);
+
+      analogWrite(links_v, 200);
+      analogWrite(rechts_v, 255);
+      anzahl_r++;
+    }
+
+    if(anzahl_r + anzahl_l > 5){
+      if(anzahl_r > anzahl_l){
+        kontrolle = kontrolle - 40;
+      }else{
+        kontrolle = kontrolle + 40;
+      }
+      anzahl_r = 0;
+      anzahl_l = 0;
+    }
+
+    delay(250);
+
+    digitalWrite(links_motor, 1);
+    digitalWrite(rechts_motor, 1);
+    analogWrite(links_v, 0);
+    analogWrite(rechts_v, 0);
+
+    delay(300);
+  }
   else if (farbe_links == LOW && farbe_rechts == HIGH){
+    kontrolle = 50;
+    anzahl_r = 0;
+    anzahl_l = 0;
     Serial.println("l");
     rechts_suchen();
   }
 
   else if (farbe_links == HIGH && farbe_rechts == LOW){
+    kontrolle = 50;
+    anzahl_r = 0;
+    anzahl_l = 0;
     Serial.println("r");
     links_suchen();
 
+  }
+  else if (farbe_mitte == LOW){
+    kontrolle = 50;
+    anzahl_r = 0;
+    anzahl_l = 0;
+    Serial.println("m");
+    analogWrite(links_v, v_normal);
+    analogWrite(rechts_v, v_normal);
+  
+
   }else{
+    kontrolle = 50;
+    anzahl_r = 0;
+    anzahl_l = 0;
 
     Serial.println("keine linie");
 
     if(letzer_turn == 1){
-      digitalWrite(rechts_motor, LOW);
-      analogWrite(links_v, 50);
-      analogWrite(rechts_v, 20);
+      rechts_suchen();
 
     } else {
-      digitalWrite(links_motor, LOW);
-      analogWrite(links_v, 20);
-      analogWrite(rechts_v, 50);
-
-    }
-    
-    while (farbe_mitte != HIGH){
-
-      if (farbe_links == LOW && farbe_rechts == HIGH){
-        Serial.println("l");
-        rechts_suchen();
-      }
-
-      else if (farbe_links == HIGH && farbe_rechts == LOW){
-        Serial.println("r");
-        links_suchen();
-      }
-      farbe_links = (analogRead(sensor_l) > 500) ? LOW : HIGH;
-      farbe_mitte = (analogRead(sensor_m) >  500) ? LOW : HIGH;
-      farbe_rechts = (analogRead(sensor_r) > 500) ? LOW : HIGH;
+      links_suchen();
     }
   }
-  delay(100);
+  delay(10);
 }
 
 
 
 /* AUFGABE 3
-  #include <Servo.h>
+#include <Servo.h>
 #define rechts_v 5
 #define links_v 6
 #define rechts_motor 7
@@ -273,5 +280,32 @@ void loop() {
 
   delay(500);
 }
-*/
 
+
+
+Serial.println("beide");
+    long dauer = random(2000, 3001);
+
+    digitalWrite(links_motor, 0);
+    digitalWrite(rechts_motor, 0);
+
+    analogWrite(links_v, v_normal);
+    analogWrite(rechts_v, 0);
+
+    delay(dauer);
+
+    analogWrite(links_v, 0);
+    analogWrite(rechts_v, v_normal);
+
+    delay(1000);
+    
+    while (farbe_rechts != LOW){
+      farbe_rechts = (analogRead(sensor_r) > 500) ? LOW : HIGH;
+      delay(10);
+    }
+
+    analogWrite(links_v, 0);
+    analogWrite(rechts_v, 0);
+
+    delay(3000);
+*/
