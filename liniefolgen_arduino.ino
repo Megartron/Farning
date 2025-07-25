@@ -17,7 +17,7 @@ int v_bremsen = 0;
 
 int anzahl_r = 0;
 int anzahl_l = 0;
-int kontrolle = 50;
+int kontrolle = 0;
 
 
 //Task finden(10, TASK_FOREVER, &linie_kontrollieren);
@@ -76,43 +76,29 @@ void loop(){ //-----------------------------------------------------------------
   digitalWrite(links_motor, HIGH);
 
   if (farbe_links == LOW && farbe_rechts == LOW && farbe_mitte == LOW) {
-    
-    bool richtung = (random(0, 101) > kontrolle);
-
-    if(richtung){
-      digitalWrite(links_motor, 0);
-      digitalWrite(rechts_motor, 0);
-
-      analogWrite(links_v, 255);
-      analogWrite(rechts_v, 200);
-      anzahl_l++;
-    }else{
-      digitalWrite(links_motor, 0);
-      digitalWrite(rechts_motor, 0);
-
-      analogWrite(links_v, 200);
-      analogWrite(rechts_v, 255);
-      anzahl_r++;
-    }
-
-    if(anzahl_r + anzahl_l > 5){
-      if(anzahl_r > anzahl_l){
-        kontrolle = kontrolle - 40;
-      }else{
-        kontrolle = kontrolle + 40;
-      }
-      anzahl_r = 0;
-      anzahl_l = 0;
-    }
-
-    delay(250);
-
-    digitalWrite(links_motor, 1);
-    digitalWrite(rechts_motor, 1);
+    digitalWrite(rechts_motor, HIGH);
+    digitalWrite(links_motor, LOW);
+    analogWrite(links_v, 60);
+    analogWrite(rechts_v, 60);
+    delay(75);
+    int t = 1;
     analogWrite(links_v, 0);
     analogWrite(rechts_v, 0);
-
-    delay(300);
+    while(farbe_links == LOW && farbe_rechts == LOW && farbe_mitte == LOW){
+      if(t % 2 == 0){
+        digitalWrite(rechts_motor, LOW);
+        digitalWrite(links_motor, HIGH);
+      }else{
+        digitalWrite(rechts_motor, HIGH);
+        digitalWrite(links_motor, LOW);
+      }
+      analogWrite(links_v, 60);
+      analogWrite(rechts_v, 60);
+      delay(t * 150);
+      analogWrite(links_v, 0);
+      analogWrite(rechts_v, 0);
+      t++;
+    }
   }
   else if (farbe_links == LOW && farbe_rechts == HIGH){
     kontrolle = 50;
@@ -156,10 +142,7 @@ void loop(){ //-----------------------------------------------------------------
   delay(10);
 }
 
-
-
-/* AUFGABE 3
-#include <Servo.h>
+/*#include <Servo.h>
 #define rechts_v 5
 #define links_v 6
 #define rechts_motor 7
@@ -174,6 +157,7 @@ void loop(){ //-----------------------------------------------------------------
 
 int t = 1500;
 Servo servo;
+float distance = 100;
 
 void setup() {
   Serial.begin(9600);
@@ -203,6 +187,21 @@ void set_v(int v){
   analogWrite(rechts_v, v);
 }
 
+void drehen(int r){
+  digitalWrite(rechts_motor, 1);
+  digitalWrite(links_motor, 1);
+
+  if(r == 0){
+    analogWrite(links_v, 0);
+    analogWrite(rechts_v, 70);
+  }else{
+    analogWrite(links_v, 70);
+    analogWrite(rechts_v, 0);
+  }
+  delay(1400);
+  set_v(0);
+}
+
 float dis(){
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
@@ -221,91 +220,75 @@ float dis(){
 void loop() {
   servo.write(90);
   
-  float distance = dis();
 
-  if(distance <= 15){
+
+  if(distance <= 20){
     set_v(0);
-    for (int angle = 90; angle >= 45; angle--) {
+    for (int angle = 50; angle >= 1; angle--) {
       servo.write(angle);
-      delay(15);  // Adjust to go slower or faster
+      delay(10);  // Adjust to go slower or faster
     }
     float rechts_dis = dis();
     Serial.print(rechts_dis);
 
-    for (int angle = 90; angle <= 135; angle++) {
+    for (int angle = 120; angle <= 179; angle++) {
       servo.write(angle);
-      delay(15);  // Adjust to go slower or faster
+      delay(10);  // Adjust to go slower or faster
     }
     float links_dis = dis();
     Serial.print(links_dis);
 
     Serial.print("-------------------");
 
+
+
+
     if(links_dis < rechts_dis){
-      analogWrite(links_v, 50);
-      analogWrite(rechts_v, 0);
+      drehen(1);
+      for (int angle = 120; angle <= 179; angle++) {
+        servo.write(angle);
+        delay(10);  // Adjust to go slower or faster
+      }
 
-      delay(t);
-      set_v(70);
+      digitalWrite(rechts_motor, 1);
+      digitalWrite(links_motor, 1);
+      set_v(60);
+      float dist = dis();
+      while(dist < 25){
+        dist = dis();
+      }
       delay(700);
+      set_v(0);
+      drehen(0);
 
-      analogWrite(links_v, 0);
-      analogWrite(rechts_v, 50);
 
-      delay(t);
+
     }else{
-      analogWrite(links_v, 0);
-      analogWrite(rechts_v, 50);
+      drehen(0);
+      for (int angle = 50; angle >= 1; angle--) {
+        servo.write(angle);
+        delay(10);  // Adjust to go slower or faster
+      }
 
-      delay(t);
-      set_v(70);
+      digitalWrite(rechts_motor, 1);
+      digitalWrite(links_motor, 1);
+      set_v(60);
+      float dist = dis();
+      while(dist < 25){
+        dist = dis();
+      }
       delay(700);
-
-      analogWrite(links_v, 50);
-      analogWrite(rechts_v, 0);
-
-      delay(t);
+      set_v(0);
+      drehen(1);
     }
 
-    
-
   }else{
+    digitalWrite(rechts_motor, HIGH);
+    digitalWrite(links_motor, HIGH);
     set_v(50);
   }
 
-  Serial.print("Distance: ");
-  Serial.print(distance);
-  Serial.println(" cm");
+  distance = dis();
 
-
-  delay(500);
-}
-
-
-
-Serial.println("beide");
-    long dauer = random(2000, 3001);
-
-    digitalWrite(links_motor, 0);
-    digitalWrite(rechts_motor, 0);
-
-    analogWrite(links_v, v_normal);
-    analogWrite(rechts_v, 0);
-
-    delay(dauer);
-
-    analogWrite(links_v, 0);
-    analogWrite(rechts_v, v_normal);
-
-    delay(1000);
-    
-    while (farbe_rechts != LOW){
-      farbe_rechts = (analogRead(sensor_r) > 500) ? LOW : HIGH;
-      delay(10);
-    }
-
-    analogWrite(links_v, 0);
-    analogWrite(rechts_v, 0);
-
-    delay(3000);
-*/
+  delay(100);
+} */
