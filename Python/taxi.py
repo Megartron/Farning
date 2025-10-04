@@ -18,31 +18,57 @@ class Taxi():
         self.taxi_pos = ()
         self.taxi_pos_px = ()
         self.phase = 0
-        self.map = [[] for _ in range(500)]
-        self.zustande = [[] for _ in range(500)]
+
+        self.zustande_fahrgast = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
+                          (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
+                          (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
+                          (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
+                          (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
+                          for _ in range(500)]
+        
+        self.zustande_ziel = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
+                          (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
+                          (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
+                          (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
+                          (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
+                          for _ in range(500)]
+        
+        self.current_zustand = self.zustande_fahrgast
+
+        """
+        for i in range(500):
+            for z in range(5):
+                for s in range(5):
+                    self.zustande[i][(z, s)] = 100
+        """
+
         self.anzahl_züge = 0
         self.code = 0
         self.taxi_gast_code = 0
         self.ziel_code = 0
         self.current_round = []
         self.starting_code = startingcode
-
+        
         # helping variables
         self.dauer = 700
         self.delta_dis = 0
         self.reset = None
         self.info = Label(root, text = "info")
+        self.speed = 500
+        self.show_rewards = True
+        self.counter = tkinter.IntVar(value=0)
 
         self.felder_koordinaten = {}
         self.animated = False
         self.while_animation = False
-        self.vorgegebener_weg = ["links", "oben", "rechts", "oben"]
-
+        self.vorgegebener_weg = []
+        #"unten", "unten", "unten", "unten", "links", "links"
+        self.tasten_initiieren()
         self.zurucksetzen()
 
         self.canvas.pack(expand=True)
         self.info.pack()
-        self.tasten_initiieren()
+        
 
     # Animation, Grafiks
     def taxi_animation(self, start_x: int, start_y):
@@ -104,6 +130,15 @@ class Taxi():
         self.root.bind("s", lambda x: self.taxi_bewegen("unten"))
         self.root.bind("d", lambda x: self.taxi_bewegen("rechts"))
 
+        scale = tkinter.Scale(self.root, from_=1, to=3000, length=400, orient="horizontal",
+                 label="Speed", command=self.set_speed)
+        scale.pack()
+        scale.set(500)
+
+        # Button to trigger the change
+        button = tkinter.Button(root, text="Show Reward", command=self.increase)
+        button.pack()
+
     def init_ziel_gast(self) -> None:
         ziel = random.randint(0, 3)
         gast = random.randint(0, 4)
@@ -122,9 +157,27 @@ class Taxi():
     def visuals(self) -> None:
         self.spielfeld_zeichnen()
         self.felder_markieren()
+        x, y = self.get_coords(self.ziel)
+        self.fill_field(x, y, "orange")
+
+        # Text
+        if self.show_rewards:
+            for pos in list(self.current_zustand[self.code].keys()):
+                x, y = self.get_coords(pos)
+
+                reward = int((1000 - self.current_zustand[self.code][pos]) * 4.5)
+                if (reward > 250):
+                    color = self.rgb_to_hex(255, 255, 0)
+                else:
+                    color = self.rgb_to_hex(reward, 255, 0)
+                self.fill_field(x, y, color)
+
+                #r = str(self.current_zustand[self.code][pos])
+                #self.canvas.create_text(x, y, text=r, font=("Arial", 16), fill="blue")
 
         x, y = self.get_coords(self.ziel)
-        self.fill_field(x, y, "green")
+        self.canvas.create_rectangle(x + 20, y + 12, x - 20, y - 12, fill = "green")
+        self.canvas.create_line(x + 20, y - 12, x + 20, y + 30, fill="black", width=3)
 
         # Taxi
         if self.animated:
@@ -149,21 +202,9 @@ class Taxi():
         x, y = self.taxi_pos_px if self.phase > 0 else self.get_coords(self.fahrgast)
         self.kreis_zeichnen(x, y, 10, "blue")
 
-        # Text
-        if (len(self.map[self.code]) <= self.anzahl_züge):
-            o = u = r = l = 100
-        else:
-            o, u, l, r = self.map[self.code][self.anzahl_züge].values()
-        info = f"Oben: {o}  Unten: {u}  Links: {l}  Rechts: {r}"
-
-        self.info.config(text = info)
-        
-
     def set_code(self, code: int):
         self.code = code
         ziel, fahrgast_pos, zeile, spalte = self.dekodieren(code)
-
-        print((ziel, fahrgast_pos, zeile, spalte))
 
         self.taxi_pos = (spalte, zeile)
         self.ziel_code = ziel
@@ -188,15 +229,44 @@ class Taxi():
             self.code = self.kodieren(self.taxi_pos, (self.taxi_gast_code, self.ziel_code))
         self.anzahl_züge = 0
         self.phase = 0
+        self.new_move(self.taxi_pos)
+        self.current_zustand = self.zustande_fahrgast
+        self.visuals()
+
+    def rgb_to_hex(self, r, g, b):
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    def increase(self):
+        self.counter.set(self.counter.get() + 1)
+        if self.counter.get() % 2 == 0:
+            self.show_rewards = True
+        else:
+            self.show_rewards = False
 
     def new_game(self):
         self.reset.destroy()
         self.zurucksetzen()
-        self.update()
+        self.root.after(2000, self.update)
     
     def quadratische_liste(self, n: int, min: int, max: int) -> list:
         schritte = [(i / (n - 1))**2 for i in range(n)]
         werte = [min + (max - min) * s for s in schritte]
+        return werte
+
+    def quadratisch_summe(self, n: int, a: float, e: float) -> list:
+        # Quadratische Basiswerte: z.B. [0², 1², 2², ..., (n-1)²]
+        basis = [(i / (n - 1))**2 for i in range(n)]
+        
+        # Skaliere so, dass der kleinste Wert a ist
+        min_basis = min(basis)
+        basis_shifted = [x - min_basis for x in basis]
+        
+        # Berechne Skalierungsfaktor, damit Summe = e
+        sum_basis = sum(basis_shifted)
+        scale = (e - a * n) / sum_basis if sum_basis != 0 else 0
+        
+        # Endgültige Werte berechnen
+        werte = [a + scale * x for x in basis_shifted]
         return werte
 
     def kreis_zeichnen(self, x: int, y: int, r: int, color: str) -> None:
@@ -221,6 +291,9 @@ class Taxi():
         self.taxi_pos_px = self.get_coords(feld)
         self.taxi_pos = feld
     
+    def set_speed(self, speed):
+        self.speed = int(speed)
+
     # Logik
     def taxi_bewegen(self, richtung: str) -> None:
         if self.while_animation:
@@ -251,6 +324,28 @@ class Taxi():
 
         else:
             raise Exception("Ungultige Bewegungseingabe!")
+    
+    def get_cord_bewegung(self, richtung) -> tuple:
+        if richtung == "rechts":
+            if self.taxi_pos[1] + 1 > 4:
+                return (-1, -1)
+            return (self.taxi_pos[0], self.taxi_pos[1] + 1)
+        
+        elif richtung == "links":
+            if self.taxi_pos[1] - 1 < 0:
+                return (-1, -1)
+            return (self.taxi_pos[0], self.taxi_pos[1] + -1)
+        
+        elif richtung == "unten":
+            if self.taxi_pos[0] + 1 > 4:
+                return (-1, -1)
+            return (self.taxi_pos[0] + 1, self.taxi_pos[1])
+
+        elif richtung == "oben":
+            if self.taxi_pos[0] - 1 < 0:
+                return (-1, -1)
+            return (self.taxi_pos[0] - 1, self.taxi_pos[1])
+
 
     def kodieren(self, coords: tuple, einstellungen: tuple) -> int:
         return ((5 * coords[0] + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]
@@ -271,86 +366,137 @@ class Taxi():
     def random_move(self) -> str:
         return random.choice(self.moglichkeiten)
 
-    def new_move(self):
-        if (len(self.map[self.code]) <= self.anzahl_züge):
-            self.map[self.code].append({
-                "oben": 100,
-                "unten": 100,
-                "links": 100,
-                "rechts": 100
-            })
-        if (self.taxi_pos not in self.zustande[self.code]):
-            self.zustande[self.code].append(self.taxi_pos)
-            self.map[self.code].append({
-                "oben": 100,
-                "unten": 100,
-                "links": 100,
-                "rechts": 100
-            })
+    def new_move(self, pos):
+        self.current_round.append(pos)
     
-    def next_max_reward(self):
-        # TODO
-        ...
+    def next_max_reward(self) -> int:
+        rewards = []
+        for i in self.moglichkeiten:
+            cords = self.get_cord_bewegung(i)
+            if cords == (-1, -1):
+                rewards.append(0)
+            else: 
+                rewards.append(self.current_zustand[self.code][cords])
+        return max(rewards)
     
-    def auswertung(self, richtung: str, a: int):
-        l = len(self.map[self.code])
+    def best_next_move(self, rand) -> str:
+        if (random.random() < rand):
+            return self.random_move()
+
+        rewards = []
+        for i in self.moglichkeiten:
+            cords = self.get_cord_bewegung(i)
+            if cords == (-1, -1):
+                rewards.append(100)
+            else: 
+                rewards.append(self.current_zustand[self.code][cords])
+
+        max_reward = max(rewards)
+        max_rewards = []
+        for i in range(len(rewards)):
+            if rewards[i] == max_reward:
+                max_rewards.append(i)
+        decicion = random.choice(max_rewards)
+        return self.moglichkeiten[decicion]
+
+    def auswertung(self, a: int):
         if self.phase == 1:
-            belohnungen = self.quadratische_liste(l, 0.5, 80)
-            for i in range(l):
-                self.map[self.code][i][self.current_round[i]] += belohnungen[i]
+            last = self.current_round[-1]
+            self.zustande_fahrgast[self.code][last] = 1000
+            if len(self.current_round) == 1: return
+            self.zustande_fahrgast[self.code][self.current_round[-2]] = 990
             self.phase = 2
 
-        elif (self.phase == 3):
-            belohnungen = self.quadratische_liste(l, 0.6, 100)
-            for i in range(l):
-                self.map[self.code][i][self.current_round[i]] += belohnungen[i]
+        elif self.phase == 3:
+            last = self.current_round[-1]
+            self.zustande_ziel[self.code][last] = 1000
+
+            self.zustande_ziel[self.code][self.current_round[-2]] = 990
             self.phase = 4
         
-        if (l == 1): return
+        if ((max_reward := self.next_max_reward()) > self.current_zustand[self.code][self.current_round[-1]]):
+            if (self.phase == 0):
+                self.zustande_fahrgast[self.code][self.current_round[-1]] = max_reward - 10
 
-        bestrafung = self.quadratische_liste(l, 0.2, self.anzahl_züge * a)
-        for i in range(l):
-                self.map[self.code][i][self.current_round[i]] -= bestrafung[i]
+            elif (self.phase == 2):
+                self.zustande_ziel[self.code][self.current_round[-1]] = max_reward - 10
     
     def geschafft(self):
         self.reset = Button(self.canvas, text="Neues Spiel", width=40,
              height=5, bd="10", command=self.new_game)
         self.reset.place(x=65, y=100)
 
+    def training(self, rounds):
+        for _ in range(rounds):
+            self.taxi_pos = (random.randint(0, 4), random.randint(0, 4))
+            self.init_ziel_gast()
+            if (self.starting_code != -1):
+                self.code = self.starting_code
+                self.set_code(self.code)
+            else:
+                self.code = self.kodieren(self.taxi_pos, (self.taxi_gast_code, self.ziel_code))
+            self.anzahl_züge = 0
+            self.phase = 0
+            self.current_zustand = self.zustande_fahrgast
+            self.new_move(self.taxi_pos)
+
+            while self.phase != 4:
+                zug = self.best_next_move(0.15)
+                self.taxi_bewegen(zug)
+
+                if (self.phase == 0):
+                    self.current_zustand = self.zustande_fahrgast
+                    if (self.taxi_pos == self.fahrgast):
+                        self.phase = 1
+
+                elif (self.phase == 2):
+                    self.current_zustand = self.zustande_ziel
+                    if (self.taxi_pos == self.ziel):
+                        self.phase = 3
+
+                self.new_move(self.taxi_pos)
+                self.auswertung(20)
+        self.zurucksetzen()
+
     # Main
     def update(self) -> None:
         self.canvas.delete("all")
-        self.visuals()
-        
         if (self.phase == 4):
             self.geschafft()
             return
         
-        zug = self.random_move()
+        zug = self.best_next_move(0.0)
+
         self.taxi_bewegen(zug)
 
         # Kontrolle Fahrgast
-        if (self.taxi_pos == self.fahrgast and self.phase == 0):
-            self.phase = 1
-        elif (self.taxi_pos == self.ziel and self.phase == 2):
-            self.phase = 3
+        if (self.phase == 0):
+            self.current_zustand = self.zustande_fahrgast
+            if (self.taxi_pos == self.fahrgast):
+                self.phase = 1
 
-        self.new_move()
-        self.current_round.append(zug)
-        self.auswertung(zug, 0.2)
+        elif (self.phase == 2):
+            self.current_zustand = self.zustande_ziel
+            if (self.taxi_pos == self.ziel):
+                self.phase = 3
+
+        self.new_move(self.taxi_pos)
+
         self.anzahl_züge += 1
+        self.auswertung(20)
         
-        print(self.map[self.code])
-        print("-------------------------------------------------------------")
+        self.visuals()
 
-        self.root.after(1000, self.update)
+        self.root.after(self.speed, self.update)
 
     
 
 if __name__ == "__main__":
 
     root = tkinter.Tk()
-    taxi1 = Taxi(root, 143)
+    taxi1 = Taxi(root, 312)
+
+    taxi1.training(0)
 
     taxi1.update()
 
