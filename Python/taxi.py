@@ -11,6 +11,7 @@ class Taxi():
         # main variables
         self.felder = ((" " for _ in range(5)) for _ in range(5))
         self.sonderfelder = ((0, 1), (1, 4), (3, 0), (4, 2))
+        self.hindernisse_felder = ((2, 1), (3, 2), (1, 3))
         self.taxi_bewegung = (0, 0)
         self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen", "aufsammeln")
         self.aufgesammelt = False
@@ -25,28 +26,28 @@ class Taxi():
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(500)]
+                          for _ in range(3000)]
 
         self.aufsammeln_fahrgast = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
                           (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(500)]
+                          for _ in range(3000)]
         
         self.zustande_ziel = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
                           (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(500)]
+                          for _ in range(3000)]
         
         self.absetzen_fahrgast = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
                           (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(500)]
+                          for _ in range(3000)]
         
         self.current_zustand = self.zustande_fahrgast
 
@@ -145,6 +146,10 @@ class Taxi():
         for coords in self.sonderfelder:
             x, y = self.get_coords(coords)
             self.fill_field(x, y, "#8400ff")
+        
+        for coords in self.hindernisse_felder:
+            x, y = self.get_coords(coords)
+            self.fill_field(x, y, "#8D0000")
 
     def tasten_initiieren(self) -> None:
         self.root.bind("w", lambda x: self.zug_machen("oben"))
@@ -178,12 +183,17 @@ class Taxi():
         self.taxi_gast_code = gast
         self.ziel_code = ziel
     
-    def wande_erschafften(self, anzahl: int):
+    def wande_erschafften(self, anzahl: int) -> None:
+        if (anzahl > 3 or anzahl < 0):
+            raise Exception("Bitte eine Zahl von 0 - 3 für die Anzahl der Wände eingeben")
+        
+        wande = []
         for _ in range(anzahl):
-            feld = (random.randint(0, 4), random.randint(0, 4))
-            while feld in self.sonderfelder or feld == self.taxi_pos or feld in self.wande:
-                feld = (random.randint(0, 4), random.randint(0, 4))
-            self.wande.append(feld)
+            rand = random.randint(0, 2)
+            while self.hindernisse_felder[rand] in wande:
+                rand = random.randint(0, 2)
+            wande.append(self.hindernisse_felder[rand])
+        self.wande = tuple(wande)
 
     def visuals(self) -> None:
         self.spielfeld_zeichnen()
@@ -277,8 +287,10 @@ class Taxi():
 
     def set_code(self, code: int):
         self.code = code
-        ziel, fahrgast_pos, zeile, spalte = self.dekodieren(code)
-
+        ziel, fahrgast_pos, zeile, spalte, wande = self.dekodieren(code)
+        
+        self.wande = wande
+        self.wande = wande
         self.taxi_pos = (spalte, zeile)
         self.ziel_code = ziel
         self.taxi_gast_code = fahrgast_pos
@@ -300,7 +312,7 @@ class Taxi():
             self.code = self.starting_code
             self.set_code(self.code)
         else:
-            self.code = self.kodieren(self.taxi_pos, (self.taxi_gast_code, self.ziel_code))
+            self.code = self.kodieren(self.taxi_pos, (self.taxi_gast_code, self.ziel_code, self.wande))
         self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
         self.anzahl_züge = 0
         self.phase = 0
@@ -421,9 +433,15 @@ class Taxi():
             return (self.taxi_pos[0] - 1, self.taxi_pos[1])
 
     def kodieren(self, coords: tuple, einstellungen: tuple) -> int:
-        return ((5 * coords[0] + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]
+        return ((((5 * coords[0] + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]) * 3 + einstellungen[2][0]) * 2 + einstellungen[2][1]
 
     def dekodieren(self, code: int) -> tuple:
+        wand1 = code % 2
+        code //= 2
+
+        wand2 = code % 3
+        code //= 3
+
         ziel = code % 4
         code //= 4
 
@@ -433,7 +451,7 @@ class Taxi():
         zeile = code // 5
         spalte = code % 5
 
-        return (ziel, fahrgast_pos, zeile, spalte)
+        return (ziel, fahrgast_pos, zeile, spalte, (wand1, wand2))
 
     # Computer
     def random_move(self) -> str:
@@ -537,14 +555,9 @@ class Taxi():
             self.current_zustand = self.zustande_fahrgast
 
             while self.phase != 4:
-                if (self.phase == -1):
-                    self.set_code(self.code)
-                    self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
-                    self.phase = 0
-                    self.wande = []
-                    self.new_move(self.taxi_pos)
-                    self.current_zustand = self.zustande_fahrgast
-
+                if self.phase == -1:
+                    self.zug_machen("wiederaufsammeln")
+                    self.phase = 2
                 zug = self.best_next_move(0.4)
                 self.zug_machen(zug)
                 self.new_move(self.taxi_pos)
@@ -557,7 +570,7 @@ class Taxi():
                 elif (self.phase == 2):
                     self.current_zustand = self.zustande_ziel
                     self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen")
-            print("geschafft, spiel: ", _)
+            #print("geschafft, spiel: ", _)
 
         self.zurucksetzen()
 
@@ -584,26 +597,6 @@ class Taxi():
         elif (self.phase == 2):
             self.current_zustand = self.zustande_ziel
             self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen")
-
-
-
-        if not self.while_animation and False:
-            # Kontrolle Fahrgast
-            if (self.phase == 0):
-                self.current_zustand = self.zustande_fahrgast
-                if (self.taxi_pos == self.fahrgast):
-                    self.current_zustand = self.zustande_ziel
-                    self.phase = 1
-
-            elif (self.phase == 2):
-                self.current_zustand = self.zustande_ziel
-                if (self.taxi_pos == self.ziel):
-                    self.phase = 3
-
-            
-
-            self.anzahl_züge += 1
-            self.auswertung(20)
             
         self.visuals()
 
