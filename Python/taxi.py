@@ -259,8 +259,11 @@ class Taxi():
             self.taxi_pos_px = self.get_coords(self.taxi_pos)
 
         # Fahrgast
-        if self.phase == 0 or not self.aufgesammelt:
-            x, y = self.get_coords(self.fahrgast)
+        if not self.aufgesammelt:
+            if self.phase == 0:
+                x, y = self.get_coords(self.fahrgast)
+            else:
+                x, y = self.get_coords(self.taxi_pos)
             self.canvas.create_line(x, y - 20, x, y + 8, width = 3, fill = "red")
             self.canvas.create_line(x, y - 5, x - 10, y - 8, width = 3, fill = "red")
             self.canvas.create_line(x, y - 5, x + 10, y - 8, width = 3, fill = "red")
@@ -298,6 +301,7 @@ class Taxi():
             self.set_code(self.code)
         else:
             self.code = self.kodieren(self.taxi_pos, (self.taxi_gast_code, self.ziel_code))
+        self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
         self.anzahl_züge = 0
         self.phase = 0
         self.wande = []
@@ -327,27 +331,6 @@ class Taxi():
         self.reset.destroy()
         self.zurucksetzen()
         self.root.after(500, self.update)
-    
-    def quadratische_liste(self, n: int, min: int, max: int) -> list:
-        schritte = [(i / (n - 1))**2 for i in range(n)]
-        werte = [min + (max - min) * s for s in schritte]
-        return werte
-
-    def quadratisch_summe(self, n: int, a: float, e: float) -> list:
-        # Quadratische Basiswerte: z.B. [0², 1², 2², ..., (n-1)²]
-        basis = [(i / (n - 1))**2 for i in range(n)]
-        
-        # Skaliere so, dass der kleinste Wert a ist
-        min_basis = min(basis)
-        basis_shifted = [x - min_basis for x in basis]
-        
-        # Berechne Skalierungsfaktor, damit Summe = e
-        sum_basis = sum(basis_shifted)
-        scale = (e - a * n) / sum_basis if sum_basis != 0 else 0
-        
-        # Endgültige Werte berechnen
-        werte = [a + scale * x for x in basis_shifted]
-        return werte
 
     def kreis_zeichnen(self, x: int, y: int, r: int, color: str) -> None:
         x0 = x - r
@@ -409,6 +392,9 @@ class Taxi():
             if self.taxi_pos != self.fahrgast:
                 return
             self.aufgesammelt = True
+        
+        elif zug == "wiederaufsammeln":
+            self.aufgesammelt = True
 
         else:
             raise Exception("Ungultige Bewegungseingabe!")
@@ -458,7 +444,7 @@ class Taxi():
     
     def next_max_reward(self) -> int:
         rewards = []
-        for i in self.moglichkeiten:
+        for i in self.moglichkeiten[:4]:
             cords = self.get_cord_bewegung(i)
             if cords == (-1, -1):
                 rewards.append(0)
@@ -472,11 +458,14 @@ class Taxi():
             cords = self.get_cord_bewegung(i)
             if cords == (-1, -1):
                 rewards.append(0)
-            else: 
+            else:
                 rewards.append(self.current_zustand[self.code][cords])
 
-        rewards.append(self.absetzen_fahrgast[self.code][self.taxi_pos])
-        rewards.append(self.aufsammeln_fahrgast[self.code][self.taxi_pos])
+        if self.phase == 0:
+            rewards.append(self.aufsammeln_fahrgast[self.code][self.taxi_pos])
+        elif self.phase == 2:
+            rewards.append(self.absetzen_fahrgast[self.code][self.taxi_pos])
+        
 
         max_reward = max(rewards)
         max_rewards = []
@@ -493,20 +482,29 @@ class Taxi():
         decicion = random.choice(max_rewards)
         return self.moglichkeiten[decicion]
 
-    def auswertung(self, a: int):
-        if self.phase == 1:
-            last = self.current_round[-1]
-            self.zustande_fahrgast[self.code][last] = 1000
-            if len(self.current_round) == 1: return
-            self.zustande_fahrgast[self.code][self.current_round[-2]] = 990
-            self.phase = 2
+    def auswertung(self, zug: str):
 
-        elif self.phase == 3:
-            last = self.current_round[-1]
-            self.zustande_ziel[self.code][last] = 1000
+        last = self.current_round[-1]
+        if zug == "aufsammeln":
+            if self.taxi_pos == self.fahrgast:
+                self.aufsammeln_fahrgast[self.code][last] = 2000
+                self.zustande_fahrgast[self.code][last] = 1000
+                if len(self.current_round) == 1: return
+                self.zustande_fahrgast[self.code][self.current_round[-2]] = 990
+                self.phase = 2
+            else:
+                self.aufsammeln_fahrgast[self.code][last] = 0
 
-            self.zustande_ziel[self.code][self.current_round[-2]] = 990
-            self.phase = 4
+        elif zug == "absetzen":
+            if self.taxi_pos == self.ziel:
+                self.absetzen_fahrgast[self.code][last] = 2000
+                self.zustande_ziel[self.code][last] = 1000
+                self.zustande_ziel[self.code][self.current_round[-2]] = 990
+                self.phase = 4
+
+            else:
+                self.absetzen_fahrgast[self.code][last] = 0
+                self.phase = -1
         
         if ((max_reward := self.next_max_reward()) > self.current_zustand[self.code][self.current_round[-1]]):
             if (self.phase == 0):
@@ -515,9 +513,10 @@ class Taxi():
             elif (self.phase == 2):
                 self.zustande_ziel[self.code][self.current_round[-1]] = max_reward - 10
     
-    def geschafft(self):
+    def geschafft(self, x):
+        text = "Geschafft" if x == 4 else "Falsch abgesetzt"
         self.visuals()
-        self.reset = Button(self.canvas, text="Neues Spiel", width=40,
+        self.reset = Button(self.canvas, text=text, width=40,
              height=5, bd="10", command=self.new_game)
         self.reset.place(x=65, y=100)
 
@@ -530,41 +529,65 @@ class Taxi():
                 self.set_code(self.code)
             else:
                 self.code = self.kodieren(self.taxi_pos, (self.taxi_gast_code, self.ziel_code))
-            self.anzahl_züge = 0
+
+            self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
             self.phase = 0
-            self.current_zustand = self.zustande_fahrgast
+            self.wande = []
             self.new_move(self.taxi_pos)
+            self.current_zustand = self.zustande_fahrgast
 
             while self.phase != 4:
-                zug = self.best_next_move(0.15)
-                self.zug_machen(zug)
-
-                if (self.phase == 0):
+                if (self.phase == -1):
+                    self.set_code(self.code)
+                    self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
+                    self.phase = 0
+                    self.wande = []
+                    self.new_move(self.taxi_pos)
                     self.current_zustand = self.zustande_fahrgast
-                    if (self.taxi_pos == self.fahrgast):
-                        self.phase = 1
+
+                zug = self.best_next_move(0.4)
+                self.zug_machen(zug)
+                self.new_move(self.taxi_pos)
+                self.auswertung(zug)
+
+                if self.phase == 0:
+                    self.current_zustand = self.zustande_fahrgast
+                    self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
 
                 elif (self.phase == 2):
                     self.current_zustand = self.zustande_ziel
-                    if (self.taxi_pos == self.ziel):
-                        self.phase = 3
+                    self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen")
+            print("geschafft, spiel: ", _)
 
-                self.new_move(self.taxi_pos)
-                self.auswertung(20)
         self.zurucksetzen()
 
     # Main
     def update(self) -> None:
         self.canvas.delete("all")
         if (self.phase == 4):
-            self.geschafft()
+            self.geschafft(self.phase)
             return
         
+        if self.phase == -1:
+            self.zug_machen("wiederaufsammeln")
+            self.phase = 2
+        else:
+            zug = self.best_next_move(0.4)
+            self.zug_machen(zug)
+            self.new_move(self.taxi_pos)
+            self.auswertung(zug)
 
-        zug = self.best_next_move(0.4)
-        self.zug_machen(zug)
+        if self.phase == 0:
+            self.current_zustand = self.zustande_fahrgast
+            self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
 
-        if not self.while_animation:
+        elif (self.phase == 2):
+            self.current_zustand = self.zustande_ziel
+            self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen")
+
+
+
+        if not self.while_animation and False:
             # Kontrolle Fahrgast
             if (self.phase == 0):
                 self.current_zustand = self.zustande_fahrgast
@@ -577,7 +600,7 @@ class Taxi():
                 if (self.taxi_pos == self.ziel):
                     self.phase = 3
 
-            self.new_move(self.taxi_pos)
+            
 
             self.anzahl_züge += 1
             self.auswertung(20)
