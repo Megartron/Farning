@@ -11,7 +11,8 @@ class Taxi():
         # main variables
         self.felder = ((" " for _ in range(5)) for _ in range(5))
         self.sonderfelder = ((0, 1), (1, 4), (3, 0), (4, 2))
-        self.hindernisse_felder = ((2, 1), (3, 2), (1, 3))
+        self.hindernisse_felder1 = ((2, 1), (3, 2))
+        self.hindernisse_felder2 = ((2, 1), (3, 2))
         self.taxi_bewegung = (0, 0)
         self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen", "aufsammeln")
         self.aufgesammelt = False
@@ -33,21 +34,21 @@ class Taxi():
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(3000)]
+                          for _ in range(4500)]
         
         self.zustande_ziel = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
                           (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(3000)]
+                          for _ in range(4500)]
         
         self.absetzen_fahrgast = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
                           (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(3000)]
+                          for _ in range(4500)]
         
         self.current_zustand = self.zustande_fahrgast
 
@@ -209,8 +210,10 @@ class Taxi():
                 reward = int((1000 - self.current_zustand[self.code][pos]) * 4.5)
                 if (self.current_zustand[self.code][pos] == 100):
                     color = "#797979"
+                elif (reward > 900):
+                    color = self.rgb_to_hex(255, 0, 0) 
                 elif (reward > 254):
-                    color = self.rgb_to_hex(255, 255, 0)
+                    color = self.rgb_to_hex(255, 20, 0)
                 else:
                     color = self.rgb_to_hex(reward, 255, 0)
                 self.fill_field(x, y, color)
@@ -433,11 +436,11 @@ class Taxi():
             return (self.taxi_pos[0] - 1, self.taxi_pos[1])
 
     def kodieren(self, coords: tuple, einstellungen: tuple) -> int:
-        return ((((5 * coords[0] + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]) * 3 + einstellungen[2][0]) * 2 + einstellungen[2][1]
+        return ((((5 * coords[0] + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]) * 3 + einstellungen[2][0]) * 3 + einstellungen[2][1]
 
     def dekodieren(self, code: int) -> tuple:
-        wand1 = code % 2
-        code //= 2
+        wand1 = code % 3
+        code //= 3
 
         wand2 = code % 3
         code //= 3
@@ -523,8 +526,14 @@ class Taxi():
             else:
                 self.absetzen_fahrgast[self.code][last] = 0
                 self.phase = -1
+                
+        if (last in self.wande):
+            if (self.phase == 0):
+                self.zustande_fahrgast[self.code][self.current_round[-1]] = 0
+            elif (self.phase == 2):
+                self.zustande_ziel[self.code][self.current_round[-1]] = 0
         
-        if ((max_reward := self.next_max_reward()) > self.current_zustand[self.code][self.current_round[-1]]):
+        elif ((max_reward := self.next_max_reward()) > self.current_zustand[self.code][self.current_round[-1]]):    
             if (self.phase == 0):
                 self.zustande_fahrgast[self.code][self.current_round[-1]] = max_reward - 10
 
