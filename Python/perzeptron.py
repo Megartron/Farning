@@ -13,19 +13,46 @@ class Zeichenfeld():
 
         self.felder_koordinaten = {}
         self.highlighted = [0 for _ in range(25)]
+        self.mouse1_pressed = False
+        self.mouse2_pressed = False
+        self.mouse_pos = ()
+        self.previous_field = ()
 
-        self.canvas.bind("<Button-1>", self.markfield)
+        self.canvas.bind("<ButtonPress-1>", lambda event: self.pressed(1))
+        self.canvas.bind("<ButtonRelease-1>", lambda event: self.released(1))
+        self.canvas.bind("<ButtonPress-3>", lambda event: self.pressed(2))
+        self.canvas.bind("<ButtonRelease-3>", lambda event: self.released(2))
+        self.canvas.bind("<Motion>", self.track_mouse)
         self.spielfeld_zeichnen()
         self.canvas.pack(expand=True)
 
-    def markfield(self, event):
-        x, y = ((event.y - 10) // 100, (event.x - 10) // 100)
+    def track_mouse(self, event):
+        self.mouse_pos = (event.x, event.y)
+
+    def pressed(self, button):
+        if button == 1:
+            self.mouse1_pressed = True
+        else:
+            self.mouse2_pressed = True
+    
+    def released(self, button):
+        if button == 1:
+            self.mouse1_pressed = False
+        else:
+            self.mouse2_pressed = False
+
+    def markfield(self):
+        mouse_x, mouse_y = self.mouse_pos
+        x, y = ((mouse_y - 10) // 100, (mouse_x - 10) // 100)
+        if (self.previous_field == (x, y)):
+            return
+        self.previous_field = (x, y)
         x_px, y_px = self.get_coords((x, y))
         self.canvas.create_rectangle(x_px - 50, y_px - 50, x_px + 50, y_px + 50, fill="#FFFFFF")
-        if self.highlighted[x + y * 5] == 1:
-            self.highlighted[x + y * 5] = 0
-        else:
+        if self.mouse1_pressed:
             self.highlighted[x + y * 5] = 1
+        elif self.mouse2_pressed:
+            self.highlighted[x + y * 5] = 2
 
     def get_coords(self, coords: tuple) -> tuple:
         return self.felder_koordinaten[coords]
@@ -51,8 +78,10 @@ class Zeichenfeld():
     def update(self) -> None:
         self.canvas.delete("all")
         self.spielfeld_zeichnen()
+        if self.mouse1_pressed or self.mouse2_pressed:
+            self.markfield()
         self.highlight_fields()
-        self.root.after(100, self.update)
+        self.root.after(10, self.update)
 
 
 if __name__ == "__main__":
@@ -62,5 +91,4 @@ if __name__ == "__main__":
     z.update()
 
     root.mainloop()
-
 
