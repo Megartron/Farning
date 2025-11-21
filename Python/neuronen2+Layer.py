@@ -40,7 +40,7 @@ def sigmoid_derivative(x):
 #        [[11, 12], [21, 22, 23], [31, 32, 33], [41, 42]] # n[0] = x, n[3] = y_schätz 
 
 
-def training(a, rounds, funktion: str, values, dataset, stop, visual_steps):
+def training(a, rounds, funktion: str, values, dataset, stop, visual_steps, update_a_start):
 
     one_time = True
     if funktion == "relu":
@@ -59,7 +59,7 @@ def training(a, rounds, funktion: str, values, dataset, stop, visual_steps):
         raise Exception
     
     progress = visual_steps
-    update_a = 0.5
+    update_a = update_a_start
 
     # values: (w, b, n, dw, db, dn, dl)
     w, b, neuron_geg, dw_geg, db_geg, dn_geg, dl_geg = values
@@ -154,6 +154,12 @@ def training(a, rounds, funktion: str, values, dataset, stop, visual_steps):
                 print("Learning rate ist jetzt: ", a)
     print("Endfehler: ", l_gesamt)
 
+    datensatz = [l_gesamt, w, b, funktion, rounds, update_a_start, dataset]
+    with open("Zahlenerkennen/training_results.csv", "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(datensatz)
+        print("successfully written into file")
+
     dl = copy.deepcopy(dl_geg)
     dw = copy.deepcopy(dw_geg)
     db = copy.deepcopy(neuron_geg)
@@ -199,6 +205,10 @@ def perzeptron(data, values):
 
     return (neuron[-1], y, l_gesamt)
 
+def xavier_init_list(n_in: int, n_out: int, x: int) -> list:
+    limit = np.sqrt(6 / (n_in + n_out))
+    return np.random.uniform(-limit, limit, x).tolist()
+
 def generate_weights(form: tuple, anzahl_output): # form = ((3, 3), (3, 3, 3), (2, 2, 2))
     n = [[] for _ in range(len(form) + 1)]
 
@@ -225,31 +235,6 @@ def generate_weights(form: tuple, anzahl_output): # form = ((3, 3), (3, 3, 3), (
 
     return (w, b, n, dw, db, dn, dl)
 
-
-w = [
- [[-0.23,  0.77, -0.56], [ 0.12, -0.88,  0.45]],
- [[ 0.91, -0.34,  0.67], [-0.11,  0.05, -0.99], [0.44, -0.72,  0.18]],
- [[-0.65,  0.22], [ 0.81, -0.47], [-0.09,  0.33]]
-]
-
-b = [[1, 1], [1, 1, 1], [1, 1, 1], [1, 1]]
-
-# Anzahl der Punkte
-n = 10
-np.random.seed(42)
-
-datensatz = []
-for _ in range(n):
-    x1 = np.random.uniform(-2, 2)
-    x2 = np.random.uniform(-2, 2)
-    
-    # Nichtlineare Transformation
-    y1 = np.sin(x1) + x2**2
-    y2 = np.cos(x2) + x1**2
-    
-    datensatz.append(((x1, x2), (y1, y2)))
-
-
 datensatz = []
 
 with open("Zahlenerkennen/datensatz.csv", newline="") as iris_dataset:
@@ -260,13 +245,13 @@ with open("Zahlenerkennen/datensatz.csv", newline="") as iris_dataset:
 
 print(datensatz)
 
-values = training(0.01, 200_000, "sigmoid", generate_weights(
+values = training(0.9, 200_000, "sigmoid", generate_weights(
     (
         (16,) * 25, 
         (16,) * 16,
         (10,) * 16
     )
-    , 10), tuple(datensatz), 0.01, 0.005)
+    , 10), tuple(datensatz), 0.01, 0.001, 0.5)
 
 print(perzeptron((
     (1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), 
