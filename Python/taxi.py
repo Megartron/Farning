@@ -11,10 +11,9 @@ class Taxi():
         # main variables
         self.felder = ((" " for _ in range(5)) for _ in range(5))
         self.sonderfelder = ((0, 1), (1, 4), (3, 0), (4, 2))
-        self.hindernisse_felder = ((2, 1), (3, 2), (3, 3), (2, 4))
-        self.grenzfelder = ((1, 0), (0, 1), (-1, 0), (0, -1))
+        self.hindernisse_felder = ((2, 1), (3, 3))
+        self.relative_pos = ((1, 0), (0, 1), (-1, 0), (0, -1))
         self.wande = ()
-        self.wande_ausrichtung = ()
         self.taxi_bewegung = (0, 0)
         self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen", "aufsammeln")
         self.aufgesammelt = False
@@ -29,28 +28,35 @@ class Taxi():
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(2004)]
+                          for _ in range(8004)]
 
         self.aufsammeln_fahrgast = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
                           (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(2004)]
+                          for _ in range(8004)]
         
         self.zustande_ziel = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
                           (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(2004)]
+                          for _ in range(8004)]
         
         self.absetzen_fahrgast = [{(0, 0): 100, (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
                           (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
                           (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
                           (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
-                          for _ in range(4500)]
+                          for _ in range(8004)]
+        
+        self.wande = [{(0, 0): , (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
+                          (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
+                          (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
+                          (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
+                          (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
+                          for _ in range(8004)]
         
         self.current_zustand = self.zustande_fahrgast
 
@@ -60,6 +66,9 @@ class Taxi():
                 for s in range(5):
                     self.zustande[i][(z, s)] = 100
         """
+
+        self.trainingsrunden = 10_000
+        self.gespielte_runden = 0
 
         self.anzahl_züge = 0
         self.code = 0
@@ -172,9 +181,9 @@ class Taxi():
 
     def init_ziel_gast(self) -> None:
         ziel = random.randint(0, 3)
-        gast = random.randint(0, 4)
+        gast = random.randint(0, 3)
         while (gast == ziel):
-                gast = random.randint(0, 4)
+            gast = random.randint(0, 3)
         
         self.ziel = self.sonderfelder[ziel]
         if (gast == 4):
@@ -186,12 +195,7 @@ class Taxi():
         self.ziel_code = ziel
     
     def wande_erschafften(self) -> None:
-        w1 = random.randint(0, 1)
-        direction_w1 = random.randint(0, 3) # 0 = norden, 1 = o, 2 = s, 3 = w
-        w2 = random.randint(2, 3)
-        direction_w2 = random.randint(0, 3) # 0 = norden, 1 = o, 2 = s, 3 = w
-        self.wande = (w1, w2)
-        self.wande_ausrichtung = (direction_w1, direction_w2)
+        self.wande = (random.randint(0, 3), random.randint(0, 3))
 
     def visuals(self) -> None:
         self.spielfeld_zeichnen()
@@ -207,10 +211,10 @@ class Taxi():
                 reward = int((1000 - self.current_zustand[self.code][pos]) * 4.5)
                 if (self.current_zustand[self.code][pos] == 100):
                     color = "#797979"
-                elif (reward > 4400):
+                elif (reward == 4500):
                     color = self.rgb_to_hex(255, 0, 0) 
                 elif (reward > 254):
-                    color = self.rgb_to_hex(255, 20, 0)
+                    color = self.rgb_to_hex(255, 200, 0)
                 else:
                     color = self.rgb_to_hex(reward, 255, 0)
                 self.fill_field(x, y, color)
@@ -237,12 +241,18 @@ class Taxi():
                     self.canvas.create_rectangle(x + 46, y0, x + 54, y0 + 10, fill = "white", outline= "")
         
         # Wände
-        for i in self.wande:
-            feld = self.hindernisse_felder[i]
-            x, y = self.get_coords(feld)
-            self.canvas.create_line(x - 50, y - 50, x + 50, y + 50, fill="red", width=3)
-            self.canvas.create_line(x + 50, y - 50, x - 50, y + 50, fill="red", width=3)
-            self.canvas.create_rectangle(x - 50, y - 50, x + 50, y + 50, outline="red", width=3)
+        for i in range(2):
+            x, y = self.get_coords(self.hindernisse_felder[i])
+            wand = self.wande[i] # ((1, 0), (0, 1), (-1, 0), (0, -1))
+            if wand == 0:
+                self.canvas.create_line(x + 50, y - 50, x + 50, y + 50, fill="red", width=3)
+            elif wand == 1:
+                self.canvas.create_line(x - 50, y + 50, x + 50, y + 50, fill="red", width=3)
+            elif wand == 2:
+                self.canvas.create_line(x - 50, y - 50, x - 50, y + 50, fill="red", width=3)
+            else:
+                self.canvas.create_line(x - 50, y - 50, x + 50, y - 50, fill="red", width=3)
+            
 
         # Fahne
         x, y = self.get_coords(self.ziel)
@@ -290,8 +300,11 @@ class Taxi():
         self.code = code
         ziel, fahrgast_pos, zeile, spalte, wande = self.dekodieren(code)
         
-        self.wande = (wande[0], wande[1] + 2)
+        self.wande = (wande[0], wande[1])
         self.taxi_pos = (spalte, zeile)
+        if self.taxi_pos in self.hindernisse_felder:
+            print("error")
+            raise Exception("Ungültiger Code!")
         self.ziel_code = ziel
         self.taxi_gast_code = fahrgast_pos
 
@@ -319,7 +332,14 @@ class Taxi():
         self.phase = 0
         self.new_move(self.taxi_pos)
         self.current_zustand = self.zustande_fahrgast
+
         self.visuals()
+
+    def get_angrenzendes_feld(self, relative_pos, feld):
+        feld_new = (feld[0] + relative_pos[0], feld[1] + relative_pos[1])
+        x, y = feld_new
+        if x < 0 or x > 4 or y < 0 or y > 4: return (-1, -1)
+        return feld_new
 
     def rgb_to_hex(self, r, g, b):
         return f"#{r:02x}{g:02x}{b:02x}"
@@ -362,6 +382,8 @@ class Taxi():
 
     def taxi_erschaffen(self) -> None:
         feld = (random.randint(0, 4), random.randint(0, 4))
+        while feld in self.hindernisse_felder:
+            feld = (random.randint(0, 4), random.randint(0, 4))
         self.taxi_pos_px = self.get_coords(feld)
         self.taxi_pos = feld
     
@@ -432,14 +454,14 @@ class Taxi():
             return (self.taxi_pos[0] - 1, self.taxi_pos[1])
 
     def kodieren(self, coords: tuple, einstellungen: tuple) -> int:
-        return ((((5 * coords[0] + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]) * 2 + einstellungen[2][0]) * 2 + einstellungen[2][1]
+        return ((((5 * coords[0] + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]) * 4 + einstellungen[2][0]) * 4 + einstellungen[2][1]
 
     def dekodieren(self, code: int) -> tuple:
-        wand1 = code % 2
-        code //= 2
+        wand1 = code % 4
+        code //= 4
 
-        wand2 = code % 2
-        code //= 2
+        wand2 = code % 4
+        code //= 4
 
         ziel = code % 4
         code //= 4
@@ -483,7 +505,6 @@ class Taxi():
         elif self.phase == 2:
             rewards.append(self.absetzen_fahrgast[self.code][self.taxi_pos])
         
-
         max_reward = max(rewards)
         max_rewards = []
         unexplored = []
@@ -518,16 +539,22 @@ class Taxi():
                 self.zustande_ziel[self.code][last] = 1000
                 self.zustande_ziel[self.code][self.current_round[-2]] = 990
                 self.phase = 4
-
             else:
                 self.absetzen_fahrgast[self.code][last] = 0
                 self.phase = -1
         
+        angrenzendes_feld = (self.get_angrenzendes_feld(self.relative_pos[self.wande[0], self.hindernisse_felder[0]]), self.get_angrenzendes_feld(self.relative_pos[self.wande[1], self.hindernisse_felder[1]]))
+
+        if len(self.current_round > 1):
+            if self.current_round[-2] in angrenzendes_feld:
+                if 
+
+        """
         wande_felder = (self.hindernisse_felder[self.wande[0]], self.hindernisse_felder[self.wande[1]])
         if (last in wande_felder):
             if (self.phase == 0):
                 self.zustande_fahrgast[self.code][self.current_round[-1]] = 0
-            elif (self.phase == 2):
+            elif self.phase == 2 or self.phase == -1:
                 self.zustande_ziel[self.code][self.current_round[-1]] = 0
         
         elif ((max_reward := self.next_max_reward()) > self.current_zustand[self.code][self.current_round[-1]]):    
@@ -535,7 +562,7 @@ class Taxi():
                 self.zustande_fahrgast[self.code][self.current_round[-1]] = max_reward - 10
 
             elif (self.phase == 2):
-                self.zustande_ziel[self.code][self.current_round[-1]] = max_reward - 10
+                self.zustande_ziel[self.code][self.current_round[-1]] = max_reward - 10"""
     
     def geschafft(self, x):
         text = "Geschafft" if x == 4 else "Falsch abgesetzt"
@@ -545,48 +572,60 @@ class Taxi():
         self.reset.place(x=65, y=100)
 
     def training(self, rounds):
-        for _ in range(rounds):
+        for runde in range(rounds):
             self.taxi_pos = (random.randint(0, 4), random.randint(0, 4))
             self.init_ziel_gast()
             self.wande_erschafften()
-            if (self.starting_code != -1):
-                self.code = self.starting_code
-                self.set_code(self.code)
-            else:
-                self.code = self.kodieren(self.taxi_pos, (self.taxi_gast_code, self.ziel_code, self.wande))
-
+            self.code = self.kodieren(self.taxi_pos, (self.taxi_gast_code, self.ziel_code, self.wande))
             self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
+            self.anzahl_züge = 0
             self.phase = 0
             self.new_move(self.taxi_pos)
             self.current_zustand = self.zustande_fahrgast
+            print("Code: ", self.code)
 
-            print(self.code)
+            self.visuals()
+
+            i = 0
             while self.phase != 4:
                 if self.phase == -1:
                     self.zug_machen("wiederaufsammeln")
                     self.phase = 2
-                zug = self.best_next_move(0.4)
-                self.zug_machen(zug)
-                self.new_move(self.taxi_pos)
-                self.auswertung(zug)
+
+                else:
+                    zug = self.best_next_move(0.4)
+                    if not (zug == "absetzen" and self.taxi_pos in (self.hindernisse_felder[self.wande[0]], self.hindernisse_felder[self.wande[1]])):
+                        self.zug_machen(zug)
+
+                    self.new_move(self.taxi_pos)
+                    self.auswertung(zug)
 
                 if self.phase == 0:
                     self.current_zustand = self.zustande_fahrgast
                     self.moglichkeiten = ("oben", "unten", "links", "rechts", "aufsammeln")
 
-                elif (self.phase == 2):
+                elif self.phase == 2:
                     self.current_zustand = self.zustande_ziel
                     self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen")
-            print("geschafft, spiel: ", _)
-
+            
+            print("Runde ", runde, " geschafft!")
+        
         self.zurucksetzen()
+    
+    def visual_training(self, rounds: int):
+        self.trainingsrunden = rounds
 
     # Main
     def update(self) -> None:
         self.canvas.delete("all")
         if (self.phase == 4):
-            self.geschafft(self.phase)
-            return
+            self.gespielte_runden += 1
+            print(self.gespielte_runden)
+            if self.gespielte_runden < self.trainingsrunden:
+                self.zurucksetzen()
+            else:
+                self.geschafft(self.phase)
+                return
         
         if self.phase == -1:
             self.zug_machen("wiederaufsammeln")
@@ -594,6 +633,7 @@ class Taxi():
         else:
             zug = self.best_next_move(0.4)
             self.zug_machen(zug)
+
             self.new_move(self.taxi_pos)
             self.auswertung(zug)
 
@@ -614,7 +654,7 @@ class Taxi():
 if __name__ == "__main__":
 
     root = tkinter.Tk()
-    taxi1 = Taxi(root, 947)
+    taxi1 = Taxi(root, 938)
 
     taxi1.training(0)
 
