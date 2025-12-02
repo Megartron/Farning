@@ -11,8 +11,10 @@ class Taxi():
         # main variables
         self.felder = ((" " for _ in range(5)) for _ in range(5))
         self.sonderfelder = ((0, 1), (1, 4), (3, 0), (4, 2))
-        self.hindernisse_felder = ((2, 1), (3, 2), (3, 3), (0, 4))
+        self.hindernisse_felder = ((2, 1), (3, 2), (3, 3), (2, 4))
+        self.grenzfelder = ((1, 0), (0, 1), (-1, 0), (0, -1))
         self.wande = ()
+        self.wande_ausrichtung = ()
         self.taxi_bewegung = (0, 0)
         self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen", "aufsammeln")
         self.aufgesammelt = False
@@ -185,8 +187,11 @@ class Taxi():
     
     def wande_erschafften(self) -> None:
         w1 = random.randint(0, 1)
+        direction_w1 = random.randint(0, 3) # 0 = norden, 1 = o, 2 = s, 3 = w
         w2 = random.randint(2, 3)
+        direction_w2 = random.randint(0, 3) # 0 = norden, 1 = o, 2 = s, 3 = w
         self.wande = (w1, w2)
+        self.wande_ausrichtung = (direction_w1, direction_w2)
 
     def visuals(self) -> None:
         self.spielfeld_zeichnen()
