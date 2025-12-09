@@ -2,7 +2,7 @@ import tkinter as tk
 import math
 
 class Pong():
-    def __init__(self, root, height, width):
+    def __init__(self, root, height, width, resolution):
         self.root = root
         self.canvas = tk.Canvas(root, width=width, height=height, bg="black")
         self.key_tracker = {}
@@ -17,6 +17,7 @@ class Pong():
         self.moving_speed = 5
         self.ball_size = 12
         self.tick = 0
+        self.resolution = resolution
 
         self.ball_vector = (6, -6)
 
@@ -112,6 +113,13 @@ class Pong():
         self.canvas.create_line(10, 10, 10, height - 10)
         self.canvas.create_line(width - 10, 10, width - 10, height - 10)
 
+        # Grid lines:
+        dis_grids_width = width/self.resolution
+        dis_grids_height= height/self.resolution
+        for i in range(self.resolution - 2):
+            self.canvas.create_line(10 + int(round(i * dis_grids_width)), 10, 10 + int(round(i * dis_grids_width)), height - 10)
+            self.canvas.create_line(10, 10 + int(round(i * dis_grids_height)), width - 10, 10 + int(round(i * dis_grids_height)))
+            
         # Ball
         x, y = self.ball_pos
         self.kreis_zeichnen(x, y, self.ball_size, "#FFFFFF")
@@ -152,7 +160,7 @@ class Pong():
 if __name__ == "__main__":
 
     root = tk.Tk()
-    pong = Pong(root, 600, 900)
+    pong = Pong(root, 600, 900, 50)
     pong.update()
 
     root.mainloop()
