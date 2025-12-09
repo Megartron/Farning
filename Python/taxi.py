@@ -12,7 +12,7 @@ class Taxi():
         self.felder = ((" " for _ in range(5)) for _ in range(5))
         self.sonderfelder = ((0, 1), (1, 4), (3, 0), (4, 2))
         self.hindernisse_felder = ((2, 1), (3, 3))
-        self.relative_pos = ((1, 0), (0, 1), (-1, 0), (0, -1))
+        self.relative_pos = ((0, 1), (1, 0), (0, -1), (-1, 0))
         self.wande = ()
         self.taxi_bewegung = (0, 0)
         self.moglichkeiten = ("oben", "unten", "links", "rechts", "absetzen", "aufsammeln")
@@ -51,11 +51,11 @@ class Taxi():
                           (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
                           for _ in range(8004)]
         
-        self.wande = [{(0, 0): , (0, 1): 100, (0, 2): 100, (0, 3): 100, (0, 4): 100, 
-                          (1, 0): 100, (1, 1): 100, (1, 2): 100, (1, 3): 100, (1, 4): 100, 
-                          (2, 0): 100, (2, 1): 100, (2, 2): 100, (2, 3): 100, (2, 4): 100, 
-                          (3, 0): 100, (3, 1): 100, (3, 2): 100, (3, 3): 100, (3, 4): 100, 
-                          (4, 0): 100, (4, 1): 100, (4, 2): 100, (4, 3): 100, (4, 4): 100}
+        self.wande_map = [{(0, 0): 0, (0, 1): 0, (0, 2): 0, (0, 3): 0, (0, 4): 0, 
+                          (1, 0): 0, (1, 1): 0, (1, 2): 0, (1, 3): 0, (1, 4): 0, 
+                          (2, 0): 0, (2, 1): 0, (2, 2): 0, (2, 3): 0, (2, 4): 0, 
+                          (3, 0): 0, (3, 1): 0, (3, 2): 0, (3, 3): 0, (3, 4): 0, 
+                          (4, 0): 0, (4, 1): 0, (4, 2): 0, (4, 3): 0, (4, 4): 0}
                           for _ in range(8004)]
         
         self.current_zustand = self.zustande_fahrgast
@@ -454,7 +454,7 @@ class Taxi():
             return (self.taxi_pos[0] - 1, self.taxi_pos[1])
 
     def kodieren(self, coords: tuple, einstellungen: tuple) -> int:
-        return ((((5 * coords[0] + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]) * 4 + einstellungen[2][0]) * 4 + einstellungen[2][1]
+        return (((((coords[0]) * 5 + coords[1]) * 5 + einstellungen[0]) * 4 + einstellungen[1]) * 4 + einstellungen[2][0]) * 4 + einstellungen[2][1]
 
     def dekodieren(self, code: int) -> tuple:
         wand1 = code % 4
@@ -469,8 +469,8 @@ class Taxi():
         fahrgast_pos = code % 5
         code //= 5
 
-        zeile = code // 5
         spalte = code % 5
+        zeile = code // 5
 
         return (ziel, fahrgast_pos, zeile, spalte, (wand1, wand2))
 
@@ -493,9 +493,11 @@ class Taxi():
     
     def best_next_move(self, rand) -> str:
         rewards = []
+        current_pos = self.current_round[-1]
         for i in self.moglichkeiten[:4]:
             cords = self.get_cord_bewegung(i)
-            if cords == (-1, -1):
+            if (cords == (-1, -1)) or (self.wande_map[self.code][current_pos] == 1 and self.wande_map[self.code][cords] == 1):
+                #print("wand erkannt")
                 rewards.append(0)
             else:
                 rewards.append(self.current_zustand[self.code][cords])
@@ -543,26 +545,23 @@ class Taxi():
                 self.absetzen_fahrgast[self.code][last] = 0
                 self.phase = -1
         
-        angrenzendes_feld = (self.get_angrenzendes_feld(self.relative_pos[self.wande[0], self.hindernisse_felder[0]]), self.get_angrenzendes_feld(self.relative_pos[self.wande[1], self.hindernisse_felder[1]]))
-
-        if len(self.current_round > 1):
-            if self.current_round[-2] in angrenzendes_feld:
-                if 
-
-        """
-        wande_felder = (self.hindernisse_felder[self.wande[0]], self.hindernisse_felder[self.wande[1]])
-        if (last in wande_felder):
-            if (self.phase == 0):
-                self.zustande_fahrgast[self.code][self.current_round[-1]] = 0
-            elif self.phase == 2 or self.phase == -1:
-                self.zustande_ziel[self.code][self.current_round[-1]] = 0
+        angrenzende_felder = (self.get_angrenzendes_feld(self.relative_pos[self.wande[0]], self.hindernisse_felder[0]), self.get_angrenzendes_feld(self.relative_pos[self.wande[1]], self.hindernisse_felder[1]))
         
-        elif ((max_reward := self.next_max_reward()) > self.current_zustand[self.code][self.current_round[-1]]):    
+        if len(self.current_round) > 1:
+            for i in range(len(angrenzende_felder)):
+                wandfeld = self.hindernisse_felder[i]
+                angrenzendes_feld = angrenzende_felder[i]
+                if (self.current_round[-1] == wandfeld and self.current_round[-2] == angrenzendes_feld) or (self.current_round[-2] == wandfeld and self.current_round[-1] == angrenzendes_feld):
+                    self.wande_map[self.code][self.current_round[-1]] = 1
+                    self.wande_map[self.code][self.current_round[-2]] = 1
+        #"""
+        if ((max_reward := self.next_max_reward()) > self.current_zustand[self.code][self.current_round[-1]]):    
             if (self.phase == 0):
                 self.zustande_fahrgast[self.code][self.current_round[-1]] = max_reward - 10
 
             elif (self.phase == 2):
-                self.zustande_ziel[self.code][self.current_round[-1]] = max_reward - 10"""
+                self.zustande_ziel[self.code][self.current_round[-1]] = max_reward - 10
+        #"""
     
     def geschafft(self, x):
         text = "Geschafft" if x == 4 else "Falsch abgesetzt"
@@ -588,17 +587,11 @@ class Taxi():
 
             i = 0
             while self.phase != 4:
-                if self.phase == -1:
-                    self.zug_machen("wiederaufsammeln")
-                    self.phase = 2
+                zug = self.best_next_move(0.4)
+                self.zug_machen(zug)
 
-                else:
-                    zug = self.best_next_move(0.4)
-                    if not (zug == "absetzen" and self.taxi_pos in (self.hindernisse_felder[self.wande[0]], self.hindernisse_felder[self.wande[1]])):
-                        self.zug_machen(zug)
-
-                    self.new_move(self.taxi_pos)
-                    self.auswertung(zug)
+                self.new_move(self.taxi_pos)
+                self.auswertung(zug)
 
                 if self.phase == 0:
                     self.current_zustand = self.zustande_fahrgast
@@ -654,7 +647,7 @@ class Taxi():
 if __name__ == "__main__":
 
     root = tkinter.Tk()
-    taxi1 = Taxi(root, 938)
+    taxi1 = Taxi(root, 6209)
 
     taxi1.training(0)
 
