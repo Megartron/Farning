@@ -9,7 +9,7 @@ class Pong():
         self.root.bind("<KeyPress>", self.on_key_press)
         self.root.bind("<KeyRelease>", self.on_key_release)
         self.spielfeld_größe = (width, height)
-        self.ball_pos = (60, 60)
+        self.ball_pos = (60, 60) # width height
         self.paddle_human_pos = [30, 100]
         self.paddle_comp_pos = [width - 30, 140]
         self.paddle_size = (6, 42)
@@ -18,6 +18,8 @@ class Pong():
         self.ball_size = 12
         self.tick = 0
         self.resolution = resolution
+        
+        self.spiel_zustand = [[0 for _ in range(self.resolution)] for _ in range(self.resolution)]
 
         self.ball_vector = (6, -6)
 
@@ -114,12 +116,25 @@ class Pong():
         self.canvas.create_line(width - 10, 10, width - 10, height - 10)
 
         # Grid lines:
-        dis_grids_width = width/self.resolution
-        dis_grids_height= height/self.resolution
-        for i in range(self.resolution - 2):
+        dis_grids_width = (width - 20)/self.resolution
+        dis_grids_height = (height - 20)/self.resolution
+        for i in range(self.resolution):
             self.canvas.create_line(10 + int(round(i * dis_grids_width)), 10, 10 + int(round(i * dis_grids_width)), height - 10)
             self.canvas.create_line(10, 10 + int(round(i * dis_grids_height)), width - 10, 10 + int(round(i * dis_grids_height)))
-            
+        self.canvas.create_line(10 + int(round((i + 1) * dis_grids_width)), 10, 10 + int(round((i + 1) * dis_grids_width)), height - 10)
+        
+        # Besetzes Feld markieren
+        for i in range(len(self.spiel_zustand)):
+            for j in range(len(self.spiel_zustand[i])):
+                if self.spiel_zustand[i][j] != 1: continue
+                x = j * dis_grids_width + 10
+                y = i * dis_grids_height + 10
+                self.canvas.create_rectangle(
+                    x, y,
+                    round(x + dis_grids_width),
+                    round(y + dis_grids_height),
+                    fill="blue")
+
         # Ball
         x, y = self.ball_pos
         self.kreis_zeichnen(x, y, self.ball_size, "#FFFFFF")
@@ -138,7 +153,13 @@ class Pong():
             font=("Times New Roman", 25, "bold"),
             fill="white"
         )
-        
+    
+    def neuer_zustand(self):
+        x, y = self.spielfeld_größe
+        i = int((self.ball_pos[1] - 10) // ((y - 20)/self.resolution))
+        j = int((self.ball_pos[0] - 10) // ((x - 20)/self.resolution))
+        self.spiel_zustand[i][j] = 1
+        print((i, j))
 
     def update(self) -> None:
         self.canvas.delete("all")
@@ -155,12 +176,14 @@ class Pong():
         elif self.key_tracker.get("s", False):
             self.move_up()
 
+        self.neuer_zustand()
+
         self.spielfeld_zeichnen()
 
 if __name__ == "__main__":
 
     root = tk.Tk()
-    pong = Pong(root, 600, 900, 50)
+    pong = Pong(root, 620, 920, 50)
     pong.update()
 
     root.mainloop()
